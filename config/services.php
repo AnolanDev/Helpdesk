@@ -35,4 +35,12 @@ return [
         ],
     ],
 
+    'glpi' => [
+        'api_url' => env('GLPI_API_URL'),
+        'app_token' => env('GLPI_APP_TOKEN'),
+        'user_token' => env('GLPI_USER_TOKEN'),
+        'timeout' => env('GLPI_TIMEOUT', 30),
+        'cache_ttl' => env('GLPI_CACHE_TTL', 300), // 5 minutes
+    ],
+
 ];

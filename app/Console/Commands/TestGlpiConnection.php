@@ -2,8 +2,8 @@
 
 namespace App\Console\Commands;
 
+use App\Services\Glpi\GlpiService;
 use Illuminate\Console\Command;
-use Illuminate\Support\Facades\Http;
 
 class TestGlpiConnection extends Command
 {
@@ -24,25 +24,14 @@ class TestGlpiConnection extends Command
     /**
      * Execute the console command.
      */
-    public function handle()
+    public function handle(GlpiService $glpi)
     {
         $this->info('🔄 Iniciando prueba de conexión con GLPI...');
         $this->newLine();
 
-        // Validar configuración
-        $apiUrl = config('services.glpi.api_url', env('GLPI_API_URL'));
-        $appToken = config('services.glpi.app_token', env('GLPI_APP_TOKEN'));
-        $userToken = config('services.glpi.user_token', env('GLPI_USER_TOKEN'));
-
-        if (!$apiUrl || !$appToken || !$userToken) {
-            $this->error('❌ Error: Faltan credenciales de GLPI en el archivo .env');
-            $this->newLine();
-            $this->line('Asegúrate de configurar:');
-            $this->line('  - GLPI_API_URL');
-            $this->line('  - GLPI_APP_TOKEN');
-            $this->line('  - GLPI_USER_TOKEN');
-            return 1;
-        }
+        $apiUrl = config('services.glpi.api_url');
+        $appToken = config('services.glpi.app_token');
+        $userToken = config('services.glpi.user_token');
 
         $this->line("📍 URL: {$apiUrl}");
         $this->line("🔑 App Token: " . substr($appToken, 0, 10) . "...");
@@ -50,74 +39,89 @@ class TestGlpiConnection extends Command
         $this->newLine();
 
         try {
-            // Intentar iniciar sesión
-            $this->info('🔐 Intentando iniciar sesión...');
+            // Test 1: Iniciar sesión
+            $this->info('🔐 Test 1: Iniciando sesión...');
+            $sessionToken = $glpi->initSession();
+            $this->info('✅ Sesión iniciada correctamente');
+            $this->line("  - Session Token: " . substr($sessionToken, 0, 20) . "...");
+            $this->newLine();
 
-            $response = Http::withHeaders([
-                'Content-Type' => 'application/json',
-                'App-Token' => $appToken,
-                'Authorization' => "user_token {$userToken}",
-            ])->get("{$apiUrl}/initSession");
+            // Test 2: Obtener información completa de la sesión
+            $this->info('📊 Test 2: Obteniendo información de sesión...');
+            $sessionData = $glpi->getFullSession();
 
-            if ($response->successful()) {
-                $data = $response->json();
-                $sessionToken = $data['session_token'] ?? null;
-
-                $this->newLine();
-                $this->info('✅ ¡Conexión exitosa!');
-                $this->newLine();
-                $this->line("📊 Datos de sesión:");
-                $this->line("  - Session Token: " . substr($sessionToken, 0, 20) . "...");
-
-                // Obtener información adicional
-                if (isset($data['glpiID'])) {
-                    $this->line("  - GLPI ID: {$data['glpiID']}");
-                }
-                if (isset($data['glpiname'])) {
-                    $this->line("  - Usuario: {$data['glpiname']}");
-                }
-                if (isset($data['glpirealname'])) {
-                    $this->line("  - Nombre: {$data['glpirealname']}");
-                }
-
-                // Cerrar sesión
-                if ($sessionToken) {
-                    $this->newLine();
-                    $this->info('🔒 Cerrando sesión...');
-
-                    $killResponse = Http::withHeaders([
-                        'Content-Type' => 'application/json',
-                        'App-Token' => $appToken,
-                        'Session-Token' => $sessionToken,
-                    ])->get("{$apiUrl}/killSession");
-
-                    if ($killResponse->successful()) {
-                        $this->info('✅ Sesión cerrada correctamente');
-                    }
-                }
-
-                $this->newLine();
-                $this->info('🎉 La configuración de GLPI está funcionando correctamente');
-                return 0;
-
-            } else {
-                $this->newLine();
-                $this->error('❌ Error al conectar con GLPI');
-                $this->newLine();
-                $this->line("📋 Código de estado: {$response->status()}");
-                $this->line("📄 Respuesta:");
-                $this->line($response->body());
-                return 1;
+            if (isset($sessionData['session']['glpiID'])) {
+                $this->line("  - GLPI ID: {$sessionData['session']['glpiID']}");
             }
+            if (isset($sessionData['session']['glpiname'])) {
+                $this->line("  - Usuario: {$sessionData['session']['glpiname']}");
+            }
+            if (isset($sessionData['session']['glpirealname'])) {
+                $this->line("  - Nombre: {$sessionData['session']['glpirealname']}");
+            }
+            if (isset($sessionData['session']['glpifirstname'])) {
+                $this->line("  - Primer Nombre: {$sessionData['session']['glpifirstname']}");
+            }
+            $this->newLine();
+
+            // Test 3: Obtener perfiles
+            $this->info('👤 Test 3: Obteniendo perfiles de usuario...');
+            $profiles = $glpi->getMyProfiles();
+            $this->line("  - Total de perfiles: " . count($profiles['myprofiles'] ?? []));
+            if (!empty($profiles['myprofiles'])) {
+                foreach ($profiles['myprofiles'] as $profile) {
+                    $this->line("    • {$profile['name']} (ID: {$profile['id']})");
+                }
+            }
+            $this->newLine();
+
+            // Test 4: Obtener entidades activas
+            $this->info('🏢 Test 4: Obteniendo entidades activas...');
+            $entities = $glpi->getActiveEntities();
+            $this->line("  - Total de entidades: " . count($entities['myentities'] ?? []));
+            if (!empty($entities['myentities'])) {
+                $entityList = array_slice($entities['myentities'], 0, 5);
+                foreach ($entityList as $entity) {
+                    $this->line("    • {$entity['name']} (ID: {$entity['id']})");
+                }
+                if (count($entities['myentities']) > 5) {
+                    $remaining = count($entities['myentities']) - 5;
+                    $this->line("    ... y {$remaining} más");
+                }
+            }
+            $this->newLine();
+
+            // Test 5: Cerrar sesión
+            $this->info('🔒 Test 5: Cerrando sesión...');
+            $glpi->killSession();
+            $this->info('✅ Sesión cerrada correctamente');
+            $this->newLine();
+
+            // Resumen
+            $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            $this->info('🎉 Todos los tests pasaron exitosamente');
+            $this->info('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+            $this->newLine();
+            $this->line('✅ Autenticación');
+            $this->line('✅ Obtención de datos de sesión');
+            $this->line('✅ Perfiles de usuario');
+            $this->line('✅ Entidades activas');
+            $this->line('✅ Cierre de sesión');
+            $this->newLine();
+
+            return 0;
 
         } catch (\Exception $e) {
             $this->newLine();
-            $this->error('❌ Error de conexión:');
-            $this->error($e->getMessage());
+            $this->error('❌ Error: ' . $e->getMessage());
             $this->newLine();
 
-            if (str_contains($e->getMessage(), 'cURL error')) {
-                $this->warn('💡 Sugerencia: Verifica que la URL de GLPI sea accesible desde este servidor');
+            if (str_contains($e->getMessage(), 'configuración')) {
+                $this->warn('💡 Asegúrate de que el archivo .env tenga las credenciales correctas');
+            } elseif (str_contains($e->getMessage(), 'conexión')) {
+                $this->warn('💡 Verifica que la URL de GLPI sea accesible desde este servidor');
+            } elseif (str_contains($e->getMessage(), 'autenticación')) {
+                $this->warn('💡 Verifica que los tokens sean válidos y tengan permisos');
             }
 
             return 1;
