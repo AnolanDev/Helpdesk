@@ -1,0 +1,278 @@
+<script setup>
+import { Head, Link } from '@inertiajs/vue3';
+
+defineProps({
+    canLogin: {
+        type: Boolean,
+    },
+    canRegister: {
+        type: Boolean,
+    },
+});
+</script>
+
+<template>
+    <Head title="Infra Manager - Gestión de Infraestructura" />
+
+    <div class="min-h-screen bg-white">
+        <!-- Navigation -->
+        <nav class="fixed top-0 z-50 w-full border-b border-secondary-100 bg-white/80 backdrop-blur-md">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="flex h-16 items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <div class="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-600 to-primary-700">
+                            <svg class="h-6 w-6 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <span class="text-xl font-bold text-secondary-900">Infra Manager</span>
+                    </div>
+
+                    <div v-if="canLogin" class="flex items-center gap-4">
+                        <Link
+                            v-if="canLogin"
+                            :href="route('login')"
+                            class="text-sm font-medium text-secondary-600 transition-colors hover:text-secondary-900"
+                        >
+                            Iniciar Sesión
+                        </Link>
+                        <Link
+                            v-if="canRegister"
+                            :href="route('register')"
+                            class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
+                        >
+                            Registrarse
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </nav>
+
+        <!-- Hero Section -->
+        <section class="relative overflow-hidden pt-16">
+            <div class="absolute inset-0 -z-10 bg-gradient-to-br from-primary-50 via-white to-secondary-50"></div>
+            <div class="mx-auto max-w-7xl px-4 py-20 sm:px-6 lg:px-8 lg:py-32">
+                <div class="grid gap-12 lg:grid-cols-2 lg:gap-16">
+                    <div class="flex flex-col justify-center">
+                        <div class="mb-6 inline-flex items-center gap-2 rounded-full bg-primary-100 px-4 py-2 text-sm font-medium text-primary-700 w-fit">
+                            <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+                            </svg>
+                            Sistema de Gestión Moderna
+                        </div>
+                        <h1 class="text-4xl font-bold tracking-tight text-secondary-900 sm:text-5xl lg:text-6xl">
+                            Gestiona tu infraestructura de forma
+                            <span class="bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent"> eficiente</span>
+                        </h1>
+                        <p class="mt-6 text-lg text-secondary-600">
+                            Administra proyectos, propiedades y equipos de trabajo desde una única plataforma.
+                            Simplifica tus operaciones y mejora la productividad.
+                        </p>
+                        <div class="mt-8 flex flex-col gap-4 sm:flex-row">
+                            <Link
+                                v-if="canRegister"
+                                :href="route('register')"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
+                            >
+                                Comenzar Ahora
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                                </svg>
+                            </Link>
+                            <Link
+                                v-if="canLogin"
+                                :href="route('login')"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary-300 bg-white px-6 py-3 text-base font-medium text-secondary-700 shadow-sm transition-all hover:bg-secondary-50"
+                            >
+                                Ver Demo
+                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                </svg>
+                            </Link>
+                        </div>
+                    </div>
+                    <div class="relative">
+                        <div class="relative rounded-2xl bg-gradient-to-br from-primary-100 to-primary-50 p-8 shadow-soft-lg">
+                            <div class="space-y-4">
+                                <div class="animate-slide-up rounded-xl bg-white p-6 shadow-soft" style="animation-delay: 0.1s">
+                                    <div class="flex items-center gap-4">
+                                        <div class="rounded-full bg-primary-100 p-3">
+                                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-secondary-600">Total Proyectos</p>
+                                            <p class="text-2xl font-bold text-secondary-900">24</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="animate-slide-up rounded-xl bg-white p-6 shadow-soft" style="animation-delay: 0.2s">
+                                    <div class="flex items-center gap-4">
+                                        <div class="rounded-full bg-green-100 p-3">
+                                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-secondary-600">Propiedades</p>
+                                            <p class="text-2xl font-bold text-secondary-900">142</p>
+                                        </div>
+                                    </div>
+                                </div>
+                                <div class="animate-slide-up rounded-xl bg-white p-6 shadow-soft" style="animation-delay: 0.3s">
+                                    <div class="flex items-center gap-4">
+                                        <div class="rounded-full bg-purple-100 p-3">
+                                            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                                            </svg>
+                                        </div>
+                                        <div>
+                                            <p class="text-sm font-medium text-secondary-600">Usuarios</p>
+                                            <p class="text-2xl font-bold text-secondary-900">18</p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Features Section -->
+        <section class="py-20 lg:py-32">
+            <div class="mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-secondary-900 sm:text-4xl">
+                        Todo lo que necesitas en un solo lugar
+                    </h2>
+                    <p class="mt-4 text-lg text-secondary-600">
+                        Funcionalidades diseñadas para optimizar tu gestión diaria
+                    </p>
+                </div>
+
+                <div class="mt-16 grid gap-8 sm:grid-cols-2 lg:grid-cols-3">
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 transition-colors group-hover:bg-primary-200">
+                            <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Gestión de Proyectos</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Organiza y supervisa todos tus proyectos de infraestructura desde un panel centralizado.
+                        </p>
+                    </div>
+
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 transition-colors group-hover:bg-green-200">
+                            <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Control de Propiedades</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Mantén un registro detallado de todas tus propiedades e instalaciones.
+                        </p>
+                    </div>
+
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-purple-100 transition-colors group-hover:bg-purple-200">
+                            <svg class="h-6 w-6 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197M13 7a4 4 0 11-8 0 4 4 0 018 0z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Gestión de Equipos</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Administra roles, permisos y colaboración entre los miembros de tu equipo.
+                        </p>
+                    </div>
+
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 transition-colors group-hover:bg-orange-200">
+                            <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Reportes y Análisis</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Genera reportes detallados y visualiza métricas clave de rendimiento.
+                        </p>
+                    </div>
+
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 transition-colors group-hover:bg-blue-200">
+                            <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 18h.01M8 21h8a2 2 0 002-2V5a2 2 0 00-2-2H8a2 2 0 00-2 2v14a2 2 0 002 2z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Acceso Móvil</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Diseño responsive que funciona perfectamente en cualquier dispositivo.
+                        </p>
+                    </div>
+
+                    <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
+                        <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 transition-colors group-hover:bg-red-200">
+                            <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                            </svg>
+                        </div>
+                        <h3 class="text-xl font-semibold text-secondary-900">Seguridad</h3>
+                        <p class="mt-2 text-secondary-600">
+                            Protección de datos con autenticación segura y control de accesos.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- CTA Section -->
+        <section class="relative overflow-hidden bg-gradient-to-br from-primary-600 to-primary-800 py-20">
+            <div class="absolute inset-0 bg-grid-white/10"></div>
+            <div class="relative mx-auto max-w-7xl px-4 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <h2 class="text-3xl font-bold text-white sm:text-4xl">
+                        ¿Listo para comenzar?
+                    </h2>
+                    <p class="mt-4 text-lg text-primary-100">
+                        Únete a Infra Manager y lleva tu gestión al siguiente nivel
+                    </p>
+                    <div class="mt-8 flex flex-col items-center justify-center gap-4 sm:flex-row">
+                        <Link
+                            v-if="canRegister"
+                            :href="route('register')"
+                            class="inline-flex items-center justify-center gap-2 rounded-lg bg-white px-6 py-3 text-base font-medium text-primary-600 shadow-sm transition-all hover:bg-primary-50"
+                        >
+                            Crear cuenta gratis
+                            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
+                            </svg>
+                        </Link>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <!-- Footer -->
+        <footer class="border-t border-secondary-200 bg-white">
+            <div class="mx-auto max-w-7xl px-4 py-12 sm:px-6 lg:px-8">
+                <div class="text-center">
+                    <div class="flex items-center justify-center gap-2">
+                        <div class="flex h-8 w-8 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-700">
+                            <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                            </svg>
+                        </div>
+                        <span class="text-lg font-bold text-secondary-900">Infra Manager</span>
+                    </div>
+                    <p class="mt-4 text-sm text-secondary-600">
+                        © 2025 Infra Manager. Todos los derechos reservados.
+                    </p>
+                </div>
+            </div>
+        </footer>
+    </div>
+</template>
