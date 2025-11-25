@@ -62,6 +62,51 @@
 
           <!-- Grid de Campos -->
           <div class="grid gap-6 sm:grid-cols-2">
+            <!-- Empresa -->
+            <div>
+              <label for="empresa" class="block text-sm font-medium text-secondary-700">
+                Empresa <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="empresa"
+                v-model="form.empresa"
+                required
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                :class="{ 'border-red-500': form.errors.empresa }"
+              >
+                <option value="">Seleccionar empresa...</option>
+                <option v-for="empresa in empresas" :key="empresa" :value="empresa">
+                  {{ empresa }}
+                </option>
+              </select>
+              <p v-if="form.errors.empresa" class="mt-1 text-sm text-red-600">
+                {{ form.errors.empresa }}
+              </p>
+            </div>
+
+            <!-- Sucursal -->
+            <div>
+              <label for="sucursal" class="block text-sm font-medium text-secondary-700">
+                Sucursal <span class="text-red-500">*</span>
+              </label>
+              <select
+                id="sucursal"
+                v-model="form.sucursal"
+                required
+                :disabled="!form.empresa"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-secondary-100 disabled:cursor-not-allowed"
+                :class="{ 'border-red-500': form.errors.sucursal }"
+              >
+                <option value="">{{ form.empresa ? 'Seleccionar sucursal...' : 'Primero seleccione una empresa' }}</option>
+                <option v-for="sucursal in availableSucursales" :key="sucursal" :value="sucursal">
+                  {{ sucursal }}
+                </option>
+              </select>
+              <p v-if="form.errors.sucursal" class="mt-1 text-sm text-red-600">
+                {{ form.errors.sucursal }}
+              </p>
+            </div>
+
             <!-- Prioridad -->
             <div>
               <label for="priority" class="block text-sm font-medium text-secondary-700">
@@ -143,7 +188,7 @@
             </div>
 
             <!-- Asignar a -->
-            <div>
+            <div class="sm:col-span-2">
               <label for="assigned_to" class="block text-sm font-medium text-secondary-700">
                 Asignar a (opcional)
               </label>
@@ -160,23 +205,6 @@
               </select>
               <p v-if="form.errors.assigned_to" class="mt-1 text-sm text-red-600">
                 {{ form.errors.assigned_to }}
-              </p>
-            </div>
-
-            <!-- Fecha de vencimiento -->
-            <div>
-              <label for="due_date" class="block text-sm font-medium text-secondary-700">
-                Fecha de vencimiento
-              </label>
-              <input
-                id="due_date"
-                v-model="form.due_date"
-                type="datetime-local"
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
-                :class="{ 'border-red-500': form.errors.due_date }"
-              />
-              <p v-if="form.errors.due_date" class="mt-1 text-sm text-red-600">
-                {{ form.errors.due_date }}
               </p>
             </div>
           </div>
@@ -235,6 +263,7 @@
 </template>
 
 <script setup>
+import { computed, watch } from 'vue';
 import { useForm, Link } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/Card.vue';
@@ -243,6 +272,8 @@ const props = defineProps({
   priorities: Object,
   categories: Object,
   users: Array,
+  empresas: Array,
+  sucursalesByEmpresa: Object,
 });
 
 const form = useForm({
@@ -252,8 +283,24 @@ const form = useForm({
   category: '',
   location: '',
   department: '',
+  empresa: '',
+  sucursal: '',
   assigned_to: '',
-  due_date: '',
+});
+
+// Computed para obtener las sucursales disponibles según la empresa seleccionada
+const availableSucursales = computed(() => {
+  if (!form.empresa) {
+    return [];
+  }
+  return props.sucursalesByEmpresa[form.empresa] || [];
+});
+
+// Watch para resetear sucursal cuando cambie la empresa
+watch(() => form.empresa, (newEmpresa, oldEmpresa) => {
+  if (newEmpresa !== oldEmpresa) {
+    form.sucursal = '';
+  }
 });
 
 const submit = () => {

@@ -28,6 +28,8 @@ class Ticket extends Model
         'category',
         'location',
         'department',
+        'empresa',
+        'sucursal',
         'glpi_ticket_id',
         'synced_with_glpi_at',
         'opened_at',
@@ -51,6 +53,14 @@ class Ticket extends Model
         'is_overdue' => 'boolean',
         'satisfaction_rating' => 'integer',
         'custom_fields' => 'array',
+    ];
+
+    protected $appends = [
+        'status_label',
+        'status_color',
+        'priority_label',
+        'priority_color',
+        'category_label',
     ];
 
     // Estados disponibles
@@ -88,7 +98,7 @@ class Ticket extends Model
         // Generar número de ticket automáticamente
         static::creating(function ($ticket) {
             if (empty($ticket->ticket_number)) {
-                $ticket->ticket_number = static::generateTicketNumber();
+                $ticket->ticket_number = static::generateTicketNumber($ticket->empresa);
             }
 
             // Cachear datos del usuario
@@ -103,6 +113,11 @@ class Ticket extends Model
             // Establecer fecha de apertura
             if (empty($ticket->opened_at)) {
                 $ticket->opened_at = now();
+            }
+
+            // Calcular fecha de vencimiento basada en SLA por prioridad
+            if (empty($ticket->due_date) && $ticket->priority) {
+                $ticket->due_date = static::calculateDueDate($ticket->priority);
             }
         });
 
@@ -219,16 +234,37 @@ class Ticket extends Model
     /**
      * Métodos auxiliares
      */
-    public static function generateTicketNumber(): string
+    public static function generateTicketNumber(string $empresa = null): string
     {
-        $year = date('Y');
-        $lastTicket = static::whereYear('created_at', $year)
+        // Obtener iniciales de la empresa
+        $iniciales = static::getEmpresaIniciales($empresa);
+
+        // Formato: ASE-20251125-1430-0001
+        $fecha = date('Ymd'); // 20251125
+        $hora = date('Hi');   // 1430
+
+        // Obtener último consecutivo del día
+        $today = date('Y-m-d');
+        $lastTicket = static::whereDate('created_at', $today)
             ->orderBy('id', 'desc')
             ->first();
 
-        $number = $lastTicket ? (int) substr($lastTicket->ticket_number, -4) + 1 : 1;
+        $consecutivo = $lastTicket
+            ? (int) substr($lastTicket->ticket_number, -4) + 1
+            : 1;
 
-        return sprintf('TKT-%s-%04d', $year, $number);
+        return sprintf('%s-%s-%s-%04d', $iniciales, $fecha, $hora, $consecutivo);
+    }
+
+    public static function getEmpresaIniciales(?string $empresa): string
+    {
+        return match ($empresa) {
+            'Asercol' => 'ASE',
+            'Sotracar' => 'SOT',
+            'Ci Global Services' => 'CIG',
+            'Ambientados' => 'AMB',
+            default => 'TKT',
+        };
     }
 
     public function isOpen(): bool
@@ -428,5 +464,59 @@ class Ticket extends Model
             static::CATEGORY_PHONE => 'Telefonía',
             static::CATEGORY_OTHER => 'Otro',
         ];
+    }
+
+    public static function getEmpresas(): array
+    {
+        return [
+            'Asercol',
+            'Sotracar',
+            'Ci Global Services',
+            'Ambientados',
+        ];
+    }
+
+    public static function getSucursalesByEmpresa(): array
+    {
+        return [
+            'Asercol' => [
+                'Santa Marta',
+                'Cucuta',
+                'Barranquilla',
+                'Cartagena',
+                'Bogota',
+                'Medellin',
+                'Buenaventura',
+                'Ipiales',
+            ],
+            'Ci Global Services' => [
+                'Cartagena',
+                'Bogota',
+            ],
+            'Sotracar' => [
+                'Cartagena',
+                'Bogota',
+                'Buenaventura',
+            ],
+            'Ambientados' => [
+                'Cartagena',
+            ],
+        ];
+    }
+
+    /**
+     * Calcular fecha de vencimiento basada en SLA por prioridad
+     */
+    public static function calculateDueDate(string $priority): ?\Carbon\Carbon
+    {
+        $slaHours = match ($priority) {
+            static::PRIORITY_URGENT => config('tickets.sla.urgent', 4),
+            static::PRIORITY_HIGH => config('tickets.sla.high', 24),
+            static::PRIORITY_NORMAL => config('tickets.sla.normal', 72),
+            static::PRIORITY_LOW => config('tickets.sla.low', 168),
+            default => config('tickets.sla.default', 72),
+        };
+
+        return now()->addHours($slaHours);
     }
 }

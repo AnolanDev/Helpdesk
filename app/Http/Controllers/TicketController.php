@@ -14,8 +14,24 @@ class TicketController extends Controller
      */
     public function index(Request $request)
     {
+        $this->authorize('viewAny', Ticket::class);
+
+        $user = auth()->user();
         $query = Ticket::with(['user', 'assignedUser'])
             ->orderBy('created_at', 'desc');
+
+        // Filtrar tickets según el tipo de usuario
+        if ($user->isUsuarioFinal()) {
+            // Usuario final: solo ve sus propios tickets
+            $query->where('user_id', $user->id);
+        } elseif ($user->isTech()) {
+            // Técnico: ve sus tickets creados + tickets asignados a él
+            $query->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('assigned_to', $user->id);
+            });
+        }
+        // Admin: ve todos los tickets (no aplica filtro)
 
         // Filtros
         if ($request->filled('status')) {
@@ -31,7 +47,8 @@ class TicketController extends Controller
         }
 
         if ($request->filled('assigned_to')) {
-            $query->assignedTo($request->assigned_to);
+            $assignedTo = $request->assigned_to === 'me' ? auth()->id() : $request->assigned_to;
+            $query->assignedTo($assignedTo);
         }
 
         if ($request->filled('search')) {
@@ -56,6 +73,17 @@ class TicketController extends Controller
 
         $tickets = $query->paginate(15)->withQueryString();
 
+        // Calcular estadísticas según los permisos del usuario
+        $statsQuery = Ticket::query();
+        if ($user->isUsuarioFinal()) {
+            $statsQuery->where('user_id', $user->id);
+        } elseif ($user->isTech()) {
+            $statsQuery->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhere('assigned_to', $user->id);
+            });
+        }
+
         return Inertia::render('Tickets/Index', [
             'tickets' => $tickets,
             'filters' => $request->only(['status', 'priority', 'category', 'assigned_to', 'search', 'show_closed']),
@@ -64,10 +92,10 @@ class TicketController extends Controller
             'categories' => Ticket::getCategories(),
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
             'stats' => [
-                'open' => Ticket::open()->count(),
-                'in_progress' => Ticket::byStatus(Ticket::STATUS_IN_PROGRESS)->count(),
-                'pending' => Ticket::byStatus(Ticket::STATUS_PENDING)->count(),
-                'overdue' => Ticket::overdue()->count(),
+                'open' => (clone $statsQuery)->open()->count(),
+                'in_progress' => (clone $statsQuery)->byStatus(Ticket::STATUS_IN_PROGRESS)->count(),
+                'pending' => (clone $statsQuery)->byStatus(Ticket::STATUS_PENDING)->count(),
+                'overdue' => (clone $statsQuery)->overdue()->count(),
             ],
         ]);
     }
@@ -77,10 +105,14 @@ class TicketController extends Controller
      */
     public function create()
     {
+        $this->authorize('create', Ticket::class);
+
         return Inertia::render('Tickets/Create', [
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'empresas' => Ticket::getEmpresas(),
+            'sucursalesByEmpresa' => Ticket::getSucursalesByEmpresa(),
         ]);
     }
 
@@ -89,6 +121,8 @@ class TicketController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Ticket::class);
+
         $validated = $request->validate([
             'title' => 'required|string|max:255',
             'description' => 'required|string',
@@ -96,8 +130,9 @@ class TicketController extends Controller
             'category' => 'required|in:' . implode(',', array_keys(Ticket::getCategories())),
             'location' => 'nullable|string|max:255',
             'department' => 'nullable|string|max:255',
+            'empresa' => 'required|string|in:' . implode(',', Ticket::getEmpresas()),
+            'sucursal' => 'required|string|max:255',
             'assigned_to' => 'nullable|exists:users,id',
-            'due_date' => 'nullable|date|after:now',
         ]);
 
         $ticket = Ticket::create([
@@ -112,6 +147,9 @@ class TicketController extends Controller
         if (!empty($validated['assigned_to'])) {
             $assignedUser = User::find($validated['assigned_to']);
             $ticket->assignTo($assignedUser);
+
+            // Notificar asignación
+            \App\Models\Notification::notifyTicketAssigned($ticket, $assignedUser, auth()->user());
         }
 
         return redirect()->route('tickets.show', $ticket)
@@ -123,6 +161,8 @@ class TicketController extends Controller
      */
     public function show(Ticket $ticket)
     {
+        $this->authorize('view', $ticket);
+
         $ticket->load([
             'user',
             'assignedUser',
@@ -136,7 +176,7 @@ class TicketController extends Controller
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
             'statuses' => Ticket::getStatuses(),
             'priorities' => Ticket::getPriorities(),
-            'canEdit' => $this->canEditTicket($ticket),
+            'canEdit' => auth()->user()->can('update', $ticket),
         ]);
     }
 
@@ -145,9 +185,7 @@ class TicketController extends Controller
      */
     public function edit(Ticket $ticket)
     {
-        if (!$this->canEditTicket($ticket)) {
-            abort(403, 'No tienes permiso para editar este ticket.');
-        }
+        $this->authorize('update', $ticket);
 
         return Inertia::render('Tickets/Edit', [
             'ticket' => $ticket,
@@ -162,9 +200,7 @@ class TicketController extends Controller
      */
     public function update(Request $request, Ticket $ticket)
     {
-        if (!$this->canEditTicket($ticket)) {
-            abort(403, 'No tienes permiso para editar este ticket.');
-        }
+        $this->authorize('update', $ticket);
 
         $validated = $request->validate([
             'title' => 'required|string|max:255',
@@ -187,6 +223,8 @@ class TicketController extends Controller
      */
     public function updateStatus(Request $request, Ticket $ticket)
     {
+        $this->authorize('updateStatus', $ticket);
+
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', array_keys(Ticket::getStatuses())),
         ]);
@@ -201,6 +239,9 @@ class TicketController extends Controller
             true
         );
 
+        // Notificar cambio de estado
+        \App\Models\Notification::notifyTicketStatusChanged($ticket, $oldStatus, $validated['status'], auth()->user());
+
         return back()->with('success', 'Estado actualizado exitosamente.');
     }
 
@@ -209,14 +250,37 @@ class TicketController extends Controller
      */
     public function assign(Request $request, Ticket $ticket)
     {
+        $this->authorize('assign', $ticket);
+
         $validated = $request->validate([
             'assigned_to' => 'required|exists:users,id',
         ]);
 
-        $user = User::find($validated['assigned_to']);
-        $ticket->assignTo($user);
+        $oldAssignee = $ticket->assigned_to ? User::find($ticket->assigned_to) : null;
+        $newAssignee = User::find($validated['assigned_to']);
 
-        return back()->with('success', "Ticket asignado a {$user->name}.");
+        // Si ya estaba asignado, es una reasignación
+        if ($oldAssignee && $oldAssignee->id !== $newAssignee->id) {
+            \App\Models\Notification::notifyTicketReassigned($ticket, $oldAssignee, $newAssignee, auth()->user());
+        } elseif (!$oldAssignee) {
+            // Primera asignación
+            \App\Models\Notification::notifyTicketAssigned($ticket, $newAssignee, auth()->user());
+        }
+
+        $ticket->assignTo($newAssignee);
+
+        // Si el usuario actual pierde acceso al ticket después de reasignarlo, redirigir al índice
+        $user = auth()->user();
+        $canStillView = $user->id === $ticket->user_id
+            || $user->id === $ticket->assigned_to
+            || $user->isAdmin();
+
+        if ($canStillView) {
+            return back()->with('success', "Ticket asignado a {$newAssignee->name}.");
+        } else {
+            return redirect()->route('tickets.index')
+                ->with('success', "Ticket asignado a {$newAssignee->name}. Has sido redirigido a la lista de tickets.");
+        }
     }
 
     /**
@@ -224,17 +288,29 @@ class TicketController extends Controller
      */
     public function addComment(Request $request, Ticket $ticket)
     {
+        $this->authorize('addComment', $ticket);
+
         $validated = $request->validate([
             'comment' => 'required|string',
             'type' => 'required|in:public,internal,solution',
             'is_private' => 'boolean',
         ]);
 
+        // Verificar si puede agregar comentarios privados
+        if (($validated['is_private'] ?? false) && !auth()->user()->can('addPrivateComment', $ticket)) {
+            abort(403, 'No tienes permiso para agregar comentarios privados.');
+        }
+
         $ticket->addComment(
             $validated['comment'],
             $validated['type'],
             $validated['is_private'] ?? false
         );
+
+        // Notificar nuevo comentario (solo si no es privado)
+        if (!($validated['is_private'] ?? false)) {
+            \App\Models\Notification::notifyTicketCommented($ticket, auth()->user());
+        }
 
         return back()->with('success', 'Comentario agregado exitosamente.');
     }
@@ -244,11 +320,16 @@ class TicketController extends Controller
      */
     public function resolve(Request $request, Ticket $ticket)
     {
+        $this->authorize('resolve', $ticket);
+
         $validated = $request->validate([
             'solution' => 'nullable|string',
         ]);
 
         $ticket->markAsResolved($validated['solution'] ?? null);
+
+        // Notificar resolución
+        \App\Models\Notification::notifyTicketResolved($ticket, auth()->user());
 
         return back()->with('success', 'Ticket marcado como resuelto.');
     }
@@ -258,6 +339,8 @@ class TicketController extends Controller
      */
     public function close(Ticket $ticket)
     {
+        $this->authorize('close', $ticket);
+
         $ticket->markAsClosed();
 
         return back()->with('success', 'Ticket cerrado exitosamente.');
@@ -268,6 +351,8 @@ class TicketController extends Controller
      */
     public function reopen(Ticket $ticket)
     {
+        $this->authorize('reopen', $ticket);
+
         if (!$ticket->isClosed() && !$ticket->isResolved()) {
             return back()->with('error', 'Solo se pueden reabrir tickets cerrados o resueltos.');
         }
@@ -282,39 +367,11 @@ class TicketController extends Controller
      */
     public function destroy(Ticket $ticket)
     {
-        // Solo el creador o admin puede eliminar
-        if ($ticket->user_id !== auth()->id() && !auth()->user()->isGlpiAdmin()) {
-            abort(403, 'No tienes permiso para eliminar este ticket.');
-        }
+        $this->authorize('delete', $ticket);
 
         $ticket->delete();
 
         return redirect()->route('tickets.index')
             ->with('success', 'Ticket eliminado exitosamente.');
-    }
-
-    /**
-     * Check if user can edit ticket.
-     */
-    private function canEditTicket(Ticket $ticket): bool
-    {
-        $user = auth()->user();
-
-        // El creador puede editar
-        if ($ticket->user_id === $user->id) {
-            return true;
-        }
-
-        // El asignado puede editar
-        if ($ticket->assigned_to === $user->id) {
-            return true;
-        }
-
-        // Los admin pueden editar cualquiera
-        if ($user->isGlpiAdmin()) {
-            return true;
-        }
-
-        return false;
     }
 }

@@ -2,20 +2,36 @@
   <AppLayout>
     <div class="mx-auto max-w-5xl space-y-6">
       <!-- Header -->
-      <div class="flex items-center justify-between">
-        <div class="flex items-center gap-4">
+      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+        <div class="flex items-center gap-3 sm:gap-4">
           <Link
             :href="route('tickets.index')"
-            class="rounded-lg p-2 text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-900"
+            class="rounded-lg p-2 text-secondary-600 transition-colors hover:bg-secondary-100 hover:text-secondary-900 flex-shrink-0"
           >
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
             </svg>
           </Link>
-          <div>
-            <h1 class="text-2xl font-bold text-secondary-900">{{ ticket.ticket_number }}</h1>
-            <p class="mt-1 text-sm text-secondary-600">
+          <div class="min-w-0 flex-1">
+            <div class="flex items-center gap-2">
+              <h1 class="text-xl font-bold text-secondary-900 sm:text-2xl truncate">{{ ticket.ticket_number }}</h1>
+              <button
+                @click="manualRefresh"
+                :disabled="isRefreshing"
+                class="rounded-lg p-1.5 text-secondary-600 transition-all hover:bg-secondary-100 hover:text-secondary-900 disabled:opacity-50 flex-shrink-0"
+                :class="{ 'animate-spin': isRefreshing }"
+                title="Actualizar ticket"
+              >
+                <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+                </svg>
+              </button>
+            </div>
+            <p class="mt-1 text-xs text-secondary-600 sm:text-sm">
               Creado {{ formatDate(ticket.created_at) }}
+              <span v-if="lastRefresh" class="text-xs text-secondary-500">
+                • Actualizado {{ lastRefresh }}
+              </span>
             </p>
           </div>
         </div>
@@ -24,7 +40,7 @@
           <Link
             v-if="canEdit"
             :href="route('tickets.edit', ticket.id)"
-            class="rounded-lg border border-secondary-300 bg-white px-4 py-2 text-sm font-semibold text-secondary-700 shadow-sm hover:bg-secondary-50"
+            class="flex-1 sm:flex-initial rounded-lg border border-secondary-300 bg-white px-4 py-2 text-sm font-semibold text-secondary-700 shadow-sm hover:bg-secondary-50 text-center"
           >
             Editar
           </Link>
@@ -129,6 +145,20 @@
 
             <!-- Add Comment Form -->
             <div class="mt-6 border-t border-secondary-200 pt-6">
+              <!-- Quick Action Buttons for Techs -->
+              <div v-if="isTech || isAdmin" class="mb-4 flex gap-2">
+                <button
+                  type="button"
+                  @click="requestMoreInfo"
+                  class="inline-flex items-center gap-2 rounded-lg bg-amber-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-amber-700"
+                >
+                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8.228 9c.549-1.165 2.03-2 3.772-2 2.21 0 4 1.343 4 3 0 1.4-1.278 2.575-3.006 2.907-.542.104-.994.54-.994 1.093m0 3h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                  </svg>
+                  Solicitar más información
+                </button>
+              </div>
+
               <form @submit.prevent="addComment" class="space-y-4">
                 <div>
                   <label for="comment" class="block text-sm font-medium text-secondary-700">
@@ -139,7 +169,7 @@
                     v-model="commentForm.comment"
                     rows="4"
                     placeholder="Escribe tu comentario..."
-                    class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                    class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                     :class="{ 'border-red-500': commentForm.errors.comment }"
                   />
                   <p v-if="commentForm.errors.comment" class="mt-1 text-sm text-red-600">
@@ -147,33 +177,38 @@
                   </p>
                 </div>
 
-                <div class="flex items-center justify-between">
-                  <div class="flex items-center gap-4">
-                    <label class="flex items-center gap-2">
+                <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
+                    <label v-if="isTech || isAdmin" class="flex items-center gap-2">
                       <input
                         v-model="commentForm.is_private"
                         type="checkbox"
-                        class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500"
+                        class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
                       />
-                      <span class="text-sm text-secondary-700">Comentario privado</span>
+                      <span class="text-sm text-secondary-700">Nota privada</span>
                     </label>
 
-                    <select
-                      v-model="commentForm.type"
-                      class="rounded-lg border-secondary-300 py-1 text-sm focus:border-primary-500 focus:ring-primary-500"
-                    >
-                      <option value="public">Público</option>
-                      <option value="internal">Interno</option>
-                      <option value="solution">Solución</option>
-                    </select>
+                    <div class="flex-1 sm:flex-initial">
+                      <select
+                        v-model="commentForm.type"
+                        class="w-full rounded-lg border-secondary-300 py-2.5 text-base md:text-sm focus:border-primary-500 focus:ring-primary-500"
+                      >
+                        <option value="public">Público</option>
+                        <option v-if="isTech || isAdmin" value="internal">Interno</option>
+                        <option v-if="isTech || isAdmin" value="solution">Solución</option>
+                      </select>
+                    </div>
                   </div>
 
                   <button
                     type="submit"
                     :disabled="commentForm.processing || !commentForm.comment"
-                    class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50"
+                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                   >
-                    Agregar
+                    <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+                    </svg>
+                    Agregar Comentario
                   </button>
                 </div>
               </form>
@@ -263,6 +298,16 @@
                 <dd class="mt-1 text-secondary-700">{{ ticket.assigned_name }}</dd>
               </div>
 
+              <div v-if="ticket.empresa">
+                <dt class="font-medium text-secondary-900">Empresa</dt>
+                <dd class="mt-1 text-secondary-700">{{ ticket.empresa }}</dd>
+              </div>
+
+              <div v-if="ticket.sucursal">
+                <dt class="font-medium text-secondary-900">Sucursal</dt>
+                <dd class="mt-1 text-secondary-700">{{ ticket.sucursal }}</dd>
+              </div>
+
               <div v-if="ticket.location">
                 <dt class="font-medium text-secondary-900">Ubicación</dt>
                 <dd class="mt-1 text-secondary-700">{{ ticket.location }}</dd>
@@ -299,9 +344,12 @@
 </template>
 
 <script setup>
-import { useForm, Link, router } from '@inertiajs/vue3';
+import { computed, ref, onMounted, onUnmounted } from 'vue';
+import { useForm, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/Card.vue';
+
+const page = usePage();
 
 const props = defineProps({
   ticket: Object,
@@ -310,6 +358,16 @@ const props = defineProps({
   priorities: Object,
   canEdit: Boolean,
 });
+
+const user = computed(() => page.props.auth?.user);
+const isAdmin = computed(() => user.value?.tipo_usuario === 'admin');
+const isTech = computed(() => user.value?.tipo_usuario === 'tech');
+
+// Auto-refresh state
+const isRefreshing = ref(false);
+const lastRefresh = ref('');
+const refreshInterval = ref(null);
+const REFRESH_INTERVAL = 30000; // 30 segundos para detalles (más frecuente)
 
 const commentForm = useForm({
   comment: '',
@@ -332,6 +390,16 @@ const addComment = () => {
       commentForm.reset();
     },
   });
+};
+
+const requestMoreInfo = () => {
+  commentForm.comment = '🔔 Necesito información adicional para poder resolver este ticket.\n\nPor favor, proporciona más detalles sobre:\n- ';
+  commentForm.type = 'public';
+  commentForm.is_private = false;
+  // Focus en el textarea
+  setTimeout(() => {
+    document.getElementById('comment')?.focus();
+  }, 100);
 };
 
 const updateStatus = () => {
@@ -424,4 +492,70 @@ const formatMinutes = (minutes) => {
   }
   return `${mins}m`;
 };
+
+// Auto-refresh functions
+const refreshTicket = () => {
+  if (isRefreshing.value) return;
+
+  isRefreshing.value = true;
+
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['ticket'],
+    onSuccess: () => {
+      updateLastRefresh();
+      isRefreshing.value = false;
+    },
+    onError: () => {
+      isRefreshing.value = false;
+    },
+  });
+};
+
+const manualRefresh = () => {
+  refreshTicket();
+};
+
+const updateLastRefresh = () => {
+  const now = new Date();
+  lastRefresh.value = now.toLocaleTimeString('es-ES', {
+    hour: '2-digit',
+    minute: '2-digit',
+  });
+};
+
+const startAutoRefresh = () => {
+  updateLastRefresh();
+
+  refreshInterval.value = setInterval(() => {
+    if (!document.hidden && !commentForm.processing) {
+      refreshTicket();
+    }
+  }, REFRESH_INTERVAL);
+};
+
+const stopAutoRefresh = () => {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value);
+    refreshInterval.value = null;
+  }
+};
+
+// Lifecycle hooks
+onMounted(() => {
+  startAutoRefresh();
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoRefresh();
+    } else {
+      startAutoRefresh();
+    }
+  });
+});
+
+onUnmounted(() => {
+  stopAutoRefresh();
+});
 </script>

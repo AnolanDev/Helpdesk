@@ -28,6 +28,10 @@ class TicketComment extends Model
         'updated_at' => 'datetime',
     ];
 
+    protected $appends = [
+        'type_label',
+    ];
+
     // Tipos de comentarios
     public const TYPE_PUBLIC = 'public';
     public const TYPE_INTERNAL = 'internal';

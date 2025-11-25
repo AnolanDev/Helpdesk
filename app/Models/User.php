@@ -37,6 +37,9 @@ class User extends Authenticatable
         'is_active',
         'last_synced_at',
         'sync_status',
+        'tipo_usuario',
+        'sucursal',
+        'empresa',
     ];
 
     /**
@@ -91,6 +94,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Scope para obtener usuarios finales
+     */
+    public function scopeUsuariosFinales($query)
+    {
+        return $query->where('tipo_usuario', 'usuario_final');
+    }
+
+    /**
+     * Scope para obtener técnicos
+     */
+    public function scopeTechs($query)
+    {
+        return $query->where('tipo_usuario', 'tech');
+    }
+
+    /**
+     * Scope para obtener administradores
+     */
+    public function scopeAdmins($query)
+    {
+        return $query->where('tipo_usuario', 'admin');
+    }
+
+    /**
      * Verifica si el usuario es administrador en GLPI
      */
     public function isGlpiAdmin(): bool
@@ -109,6 +136,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Verifica si el usuario es administrador del sistema
+     */
+    public function isAdmin(): bool
+    {
+        return $this->tipo_usuario === 'admin';
+    }
+
+    /**
+     * Verifica si el usuario es técnico
+     */
+    public function isTech(): bool
+    {
+        return $this->tipo_usuario === 'tech';
+    }
+
+    /**
+     * Verifica si el usuario es usuario final
+     */
+    public function isUsuarioFinal(): bool
+    {
+        return $this->tipo_usuario === 'usuario_final';
+    }
+
+    /**
      * Obtiene el nombre completo del usuario
      */
     public function getFullNameAttribute(): string
@@ -118,5 +169,30 @@ class User extends Authenticatable
         }
 
         return $this->name;
+    }
+
+    /**
+     * Obtiene la etiqueta del tipo de usuario
+     */
+    public function getTipoUsuarioLabelAttribute(): string
+    {
+        return match($this->tipo_usuario) {
+            'usuario_final' => 'Usuario Final',
+            'tech' => 'Técnico',
+            'admin' => 'Administrador',
+            default => 'N/A',
+        };
+    }
+
+    /**
+     * Obtiene los tipos de usuario disponibles
+     */
+    public static function getTiposUsuario(): array
+    {
+        return [
+            'usuario_final' => 'Usuario Final',
+            'tech' => 'Técnico',
+            'admin' => 'Administrador',
+        ];
     }
 }
