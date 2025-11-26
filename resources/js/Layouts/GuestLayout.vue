@@ -19,19 +19,19 @@ import { Link } from '@inertiajs/vue3';
 
             <div class="space-y-6">
                 <h2 class="text-4xl font-bold text-white">
-                    Sistema de Gestión de Infraestructura
+                    Sistema de Helpdesk
                 </h2>
                 <p class="text-lg text-primary-100">
-                    Administra tus proyectos, propiedades y equipos de trabajo desde una única plataforma moderna y eficiente.
+                    Gestiona tickets de soporte técnico, usuarios y equipos desde una plataforma moderna y eficiente.
                 </p>
                 <div class="flex gap-8 pt-8">
                     <div>
                         <div class="text-3xl font-bold text-white">24+</div>
-                        <div class="text-sm text-primary-200">Proyectos Activos</div>
+                        <div class="text-sm text-primary-200">Tickets Activos</div>
                     </div>
                     <div>
-                        <div class="text-3xl font-bold text-white">142+</div>
-                        <div class="text-sm text-primary-200">Propiedades</div>
+                        <div class="text-3xl font-bold text-white">12+</div>
+                        <div class="text-sm text-primary-200">Resueltos Hoy</div>
                     </div>
                     <div>
                         <div class="text-3xl font-bold text-white">18+</div>

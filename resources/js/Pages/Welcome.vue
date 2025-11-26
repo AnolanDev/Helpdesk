@@ -61,12 +61,12 @@ defineProps({
                             Sistema de Gestión Moderna
                         </div>
                         <h1 class="text-4xl font-bold tracking-tight text-secondary-900 sm:text-5xl lg:text-6xl">
-                            Gestiona tu infraestructura de forma
-                            <span class="bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent"> eficiente</span>
+                            Soporte técnico
+                            <span class="bg-gradient-to-r from-primary-600 to-primary-700 bg-clip-text text-transparent"> simplificado</span>
                         </h1>
                         <p class="mt-6 text-lg text-secondary-600">
-                            Administra proyectos, propiedades y equipos de trabajo desde una única plataforma.
-                            Simplifica tus operaciones y mejora la productividad.
+                            Sistema de helpdesk completo para gestionar tickets, usuarios y equipos de soporte técnico.
+                            Centraliza todas tus solicitudes y mejora la productividad.
                         </p>
                         <div class="mt-8 flex flex-col gap-4 sm:flex-row">
                             <Link
@@ -99,11 +99,11 @@ defineProps({
                                     <div class="flex items-center gap-4">
                                         <div class="rounded-full bg-primary-100 p-3">
                                             <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-medium text-secondary-600">Total Proyectos</p>
+                                            <p class="text-sm font-medium text-secondary-600">Tickets Activos</p>
                                             <p class="text-2xl font-bold text-secondary-900">24</p>
                                         </div>
                                     </div>
@@ -112,12 +112,12 @@ defineProps({
                                     <div class="flex items-center gap-4">
                                         <div class="rounded-full bg-green-100 p-3">
                                             <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                                             </svg>
                                         </div>
                                         <div>
-                                            <p class="text-sm font-medium text-secondary-600">Propiedades</p>
-                                            <p class="text-2xl font-bold text-secondary-900">142</p>
+                                            <p class="text-sm font-medium text-secondary-600">Resueltos Hoy</p>
+                                            <p class="text-2xl font-bold text-secondary-900">12</p>
                                         </div>
                                     </div>
                                 </div>
@@ -157,24 +157,24 @@ defineProps({
                     <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
                         <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 transition-colors group-hover:bg-primary-200">
                             <svg class="h-6 w-6 text-primary-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-secondary-900">Gestión de Proyectos</h3>
+                        <h3 class="text-xl font-semibold text-secondary-900">Gestión de Tickets</h3>
                         <p class="mt-2 text-secondary-600">
-                            Organiza y supervisa todos tus proyectos de infraestructura desde un panel centralizado.
+                            Crea, asigna y da seguimiento a solicitudes de soporte con un sistema completo de tickets.
                         </p>
                     </div>
 
                     <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
                         <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-green-100 transition-colors group-hover:bg-green-200">
                             <svg class="h-6 w-6 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-secondary-900">Control de Propiedades</h3>
+                        <h3 class="text-xl font-semibold text-secondary-900">Seguimiento SLA</h3>
                         <p class="mt-2 text-secondary-600">
-                            Mantén un registro detallado de todas tus propiedades e instalaciones.
+                            Monitorea tiempos de respuesta y resolución con alertas de vencimiento automáticas.
                         </p>
                     </div>
 
@@ -193,12 +193,12 @@ defineProps({
                     <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
                         <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-orange-100 transition-colors group-hover:bg-orange-200">
                             <svg class="h-6 w-6 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-secondary-900">Reportes y Análisis</h3>
+                        <h3 class="text-xl font-semibold text-secondary-900">Bitácora Completa</h3>
                         <p class="mt-2 text-secondary-600">
-                            Genera reportes detallados y visualiza métricas clave de rendimiento.
+                            Historial detallado de todas las acciones realizadas en cada ticket con exportación a PDF y Excel.
                         </p>
                     </div>
 
@@ -217,12 +217,12 @@ defineProps({
                     <div class="group rounded-2xl border border-secondary-200 bg-white p-8 shadow-soft transition-all hover:shadow-soft-lg">
                         <div class="mb-4 inline-flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 transition-colors group-hover:bg-red-200">
                             <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                         </div>
-                        <h3 class="text-xl font-semibold text-secondary-900">Seguridad</h3>
+                        <h3 class="text-xl font-semibold text-secondary-900">Notificaciones</h3>
                         <p class="mt-2 text-secondary-600">
-                            Protección de datos con autenticación segura y control de accesos.
+                            Alertas en tiempo real para asignaciones, cambios de estado y actualizaciones de tickets.
                         </p>
                     </div>
                 </div>

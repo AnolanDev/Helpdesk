@@ -33,7 +33,7 @@
               type="text"
               required
               placeholder="Describe brevemente el problema"
-              class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
               :class="{ 'border-red-500': form.errors.title }"
             />
             <p v-if="form.errors.title" class="mt-1 text-sm text-red-600">
@@ -52,7 +52,7 @@
               required
               rows="6"
               placeholder="Proporciona todos los detalles relevantes del problema..."
-              class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+              class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
               :class="{ 'border-red-500': form.errors.description }"
             />
             <p v-if="form.errors.description" class="mt-1 text-sm text-red-600">
@@ -71,7 +71,7 @@
                 id="empresa"
                 v-model="form.empresa"
                 required
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.empresa }"
               >
                 <option value="">Seleccionar empresa...</option>
@@ -94,7 +94,7 @@
                 v-model="form.sucursal"
                 required
                 :disabled="!form.empresa"
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm disabled:bg-secondary-100 disabled:cursor-not-allowed"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm disabled:bg-secondary-100 disabled:cursor-not-allowed"
                 :class="{ 'border-red-500': form.errors.sucursal }"
               >
                 <option value="">{{ form.empresa ? 'Seleccionar sucursal...' : 'Primero seleccione una empresa' }}</option>
@@ -116,7 +116,7 @@
                 id="priority"
                 v-model="form.priority"
                 required
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.priority }"
               >
                 <option value="">Seleccionar...</option>
@@ -138,7 +138,7 @@
                 id="category"
                 v-model="form.category"
                 required
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.category }"
               >
                 <option value="">Seleccionar...</option>
@@ -161,7 +161,7 @@
                 v-model="form.location"
                 type="text"
                 placeholder="Ej: Piso 3, Oficina 301"
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.location }"
               />
               <p v-if="form.errors.location" class="mt-1 text-sm text-red-600">
@@ -179,7 +179,7 @@
                 v-model="form.department"
                 type="text"
                 placeholder="Ej: IT, RRHH, Ventas"
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.department }"
               />
               <p v-if="form.errors.department" class="mt-1 text-sm text-red-600">
@@ -195,7 +195,7 @@
               <select
                 id="assigned_to"
                 v-model="form.assigned_to"
-                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm"
+                class="mt-1 block w-full rounded-lg border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 text-base md:text-sm"
                 :class="{ 'border-red-500': form.errors.assigned_to }"
               >
                 <option value="">Sin asignar</option>

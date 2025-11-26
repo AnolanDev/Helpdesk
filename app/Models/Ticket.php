@@ -173,6 +173,11 @@ class Ticket extends Model
         return $this->comments()->where('is_private', true);
     }
 
+    public function activities(): HasMany
+    {
+        return $this->hasMany(TicketActivity::class)->orderBy('created_at', 'desc');
+    }
+
     /**
      * Scopes
      */

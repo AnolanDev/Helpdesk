@@ -3,9 +3,13 @@
 namespace App\Http\Controllers;
 
 use App\Models\Ticket;
+use App\Models\TicketActivity;
 use App\Models\User;
+use App\Exports\TicketActivitiesExport;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class TicketController extends Controller
 {
@@ -143,10 +147,16 @@ class TicketController extends Controller
                 : Ticket::STATUS_NEW,
         ]);
 
+        // Log ticket creation
+        TicketActivity::logCreated($ticket, auth()->user());
+
         // Si se asigna directamente
         if (!empty($validated['assigned_to'])) {
             $assignedUser = User::find($validated['assigned_to']);
             $ticket->assignTo($assignedUser);
+
+            // Log assignment
+            TicketActivity::logAssigned($ticket, $assignedUser, auth()->user());
 
             // Notificar asignación
             \App\Models\Notification::notifyTicketAssigned($ticket, $assignedUser, auth()->user());
@@ -168,6 +178,9 @@ class TicketController extends Controller
             'assignedUser',
             'comments' => function ($query) {
                 $query->with('user')->orderBy('created_at', 'asc');
+            },
+            'activities' => function ($query) {
+                $query->with('user')->orderBy('created_at', 'desc');
             },
         ]);
 
@@ -212,7 +225,32 @@ class TicketController extends Controller
             'due_date' => 'nullable|date',
         ]);
 
+        // Track changes for activity log
+        $oldPriority = $ticket->priority;
+        $oldCategory = $ticket->category;
+
         $ticket->update($validated);
+
+        // Log specific changes
+        if ($oldPriority !== $validated['priority']) {
+            TicketActivity::logPriorityChanged($ticket, $oldPriority, $validated['priority'], auth()->user());
+        }
+
+        if ($oldCategory !== $validated['category']) {
+            TicketActivity::logCategoryChanged($ticket, $oldCategory, $validated['category'], auth()->user());
+        }
+
+        // Log general update if other fields changed
+        $changes = [];
+        foreach (['title', 'description', 'location', 'department', 'due_date'] as $field) {
+            if ($ticket->getOriginal($field) !== $validated[$field] ?? null) {
+                $changes[$field] = $validated[$field] ?? null;
+            }
+        }
+
+        if (!empty($changes)) {
+            TicketActivity::logUpdated($ticket, auth()->user(), $changes);
+        }
 
         return redirect()->route('tickets.show', $ticket)
             ->with('success', 'Ticket actualizado exitosamente.');
@@ -231,6 +269,9 @@ class TicketController extends Controller
 
         $oldStatus = $ticket->status;
         $ticket->update(['status' => $validated['status']]);
+
+        // Log status change
+        TicketActivity::logStatusChanged($ticket, $oldStatus, $validated['status'], auth()->user());
 
         // Agregar comentario automático del cambio de estado
         $ticket->addComment(
@@ -261,9 +302,12 @@ class TicketController extends Controller
 
         // Si ya estaba asignado, es una reasignación
         if ($oldAssignee && $oldAssignee->id !== $newAssignee->id) {
+            // Log reassignment
+            TicketActivity::logReassigned($ticket, $oldAssignee, $newAssignee, auth()->user());
             \App\Models\Notification::notifyTicketReassigned($ticket, $oldAssignee, $newAssignee, auth()->user());
         } elseif (!$oldAssignee) {
             // Primera asignación
+            TicketActivity::logAssigned($ticket, $newAssignee, auth()->user());
             \App\Models\Notification::notifyTicketAssigned($ticket, $newAssignee, auth()->user());
         }
 
@@ -307,6 +351,9 @@ class TicketController extends Controller
             $validated['is_private'] ?? false
         );
 
+        // Log comment
+        TicketActivity::logCommented($ticket, auth()->user(), $validated['type']);
+
         // Notificar nuevo comentario (solo si no es privado)
         if (!($validated['is_private'] ?? false)) {
             \App\Models\Notification::notifyTicketCommented($ticket, auth()->user());
@@ -328,6 +375,9 @@ class TicketController extends Controller
 
         $ticket->markAsResolved($validated['solution'] ?? null);
 
+        // Log resolution
+        TicketActivity::logResolved($ticket, auth()->user());
+
         // Notificar resolución
         \App\Models\Notification::notifyTicketResolved($ticket, auth()->user());
 
@@ -342,6 +392,9 @@ class TicketController extends Controller
         $this->authorize('close', $ticket);
 
         $ticket->markAsClosed();
+
+        // Log closure
+        TicketActivity::logClosed($ticket, auth()->user());
 
         return back()->with('success', 'Ticket cerrado exitosamente.');
     }
@@ -359,6 +412,9 @@ class TicketController extends Controller
 
         $ticket->reopen();
 
+        // Log reopening
+        TicketActivity::logReopened($ticket, auth()->user());
+
         return back()->with('success', 'Ticket reabierto exitosamente.');
     }
 
@@ -373,5 +429,36 @@ class TicketController extends Controller
 
         return redirect()->route('tickets.index')
             ->with('success', 'Ticket eliminado exitosamente.');
+    }
+
+    /**
+     * Export ticket activities
+     */
+    public function exportActivities(Request $request, Ticket $ticket)
+    {
+        $this->authorize('view', $ticket);
+
+        $format = $request->query('format', 'excel');
+
+        if ($format === 'excel') {
+            return Excel::download(
+                new TicketActivitiesExport($ticket->id),
+                "ticket-{$ticket->ticket_number}-actividades.xlsx"
+            );
+        } elseif ($format === 'pdf') {
+            $activities = TicketActivity::where('ticket_id', $ticket->id)
+                ->with('user')
+                ->orderBy('created_at', 'desc')
+                ->get();
+
+            $pdf = Pdf::loadView('exports.ticket-activities', [
+                'ticket' => $ticket,
+                'activities' => $activities,
+            ])->setPaper('a4', 'portrait');
+
+            return $pdf->download("ticket-{$ticket->ticket_number}-actividades.pdf");
+        }
+
+        abort(400, 'Invalid export format');
     }
 }

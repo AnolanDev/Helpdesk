@@ -230,7 +230,7 @@
                 <select
                   v-model="statusForm.status"
                   @change="updateStatus"
-                  class="mt-1 block w-full rounded-lg border-secondary-300 py-2 text-sm focus:border-primary-500 focus:ring-primary-500"
+                  class="mt-1 block w-full rounded-lg border-secondary-300 py-2.5 text-base md:text-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option v-for="(label, value) in statuses" :key="value" :value="value">
                     {{ label }}
@@ -244,7 +244,7 @@
                 <select
                   v-model="assignForm.assigned_to"
                   @change="assignTicket"
-                  class="mt-1 block w-full rounded-lg border-secondary-300 py-2 text-sm focus:border-primary-500 focus:ring-primary-500"
+                  class="mt-1 block w-full rounded-lg border-secondary-300 py-2.5 text-base md:text-sm focus:border-primary-500 focus:ring-primary-500"
                 >
                   <option value="">Sin asignar</option>
                   <option v-for="user in users" :key="user.id" :value="user.id">
@@ -339,6 +339,11 @@
           </Card>
         </div>
       </div>
+
+      <!-- Timeline Section -->
+      <Card variant="elevated">
+        <TicketTimeline :activities="ticket.activities" :ticket-id="ticket.id" />
+      </Card>
     </div>
   </AppLayout>
 </template>
@@ -348,6 +353,7 @@ import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { useForm, Link, router, usePage } from '@inertiajs/vue3';
 import AppLayout from '@/Layouts/AppLayout.vue';
 import Card from '@/Components/Card.vue';
+import TicketTimeline from '@/Components/TicketTimeline.vue';
 
 const page = usePage();
 

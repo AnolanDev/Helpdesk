@@ -36,6 +36,7 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tickets/{ticket}/resolve', [TicketController::class, 'resolve'])->name('tickets.resolve');
     Route::patch('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
     Route::patch('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
+    Route::get('/tickets/{ticket}/export-activities', [TicketController::class, 'exportActivities'])->name('tickets.export-activities');
 
     // Users Routes
     Route::resource('users', UserController::class);
