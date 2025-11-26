@@ -244,21 +244,24 @@ class Ticket extends Model
         // Obtener iniciales de la empresa
         $iniciales = static::getEmpresaIniciales($empresa);
 
-        // Formato: ASE-20251125-1430-0001
-        $fecha = date('Ymd'); // 20251125
-        $hora = date('Hi');   // 1430
-
-        // Obtener último consecutivo del día
+        // Formato corto: ASE-0001
+        // Consecutivo diario (se reinicia cada día)
         $today = date('Y-m-d');
         $lastTicket = static::whereDate('created_at', $today)
+            ->where('ticket_number', 'like', $iniciales . '-%')
             ->orderBy('id', 'desc')
             ->first();
 
-        $consecutivo = $lastTicket
-            ? (int) substr($lastTicket->ticket_number, -4) + 1
-            : 1;
+        $consecutivo = 1;
+        if ($lastTicket) {
+            // Extraer el número después del guion
+            $parts = explode('-', $lastTicket->ticket_number);
+            if (count($parts) === 2 && is_numeric($parts[1])) {
+                $consecutivo = (int) $parts[1] + 1;
+            }
+        }
 
-        return sprintf('%s-%s-%s-%04d', $iniciales, $fecha, $hora, $consecutivo);
+        return sprintf('%s-%04d', $iniciales, $consecutivo);
     }
 
     public static function getEmpresaIniciales(?string $empresa): string

@@ -94,7 +94,7 @@ class TicketController extends Controller
             'statuses' => Ticket::getStatuses(),
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'users' => User::active()->techs()->orderBy('name')->get(['id', 'name']),
             'stats' => [
                 'open' => (clone $statsQuery)->open()->count(),
                 'in_progress' => (clone $statsQuery)->byStatus(Ticket::STATUS_IN_PROGRESS)->count(),
@@ -114,7 +114,7 @@ class TicketController extends Controller
         return Inertia::render('Tickets/Create', [
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'users' => User::active()->techs()->orderBy('name')->get(['id', 'name']),
             'empresas' => Ticket::getEmpresas(),
             'sucursalesByEmpresa' => Ticket::getSucursalesByEmpresa(),
         ]);
@@ -186,7 +186,7 @@ class TicketController extends Controller
 
         return Inertia::render('Tickets/Show', [
             'ticket' => $ticket,
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'users' => User::active()->techs()->orderBy('name')->get(['id', 'name']),
             'statuses' => Ticket::getStatuses(),
             'priorities' => Ticket::getPriorities(),
             'canEdit' => auth()->user()->can('update', $ticket),
@@ -204,7 +204,7 @@ class TicketController extends Controller
             'ticket' => $ticket,
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'users' => User::active()->techs()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -268,20 +268,30 @@ class TicketController extends Controller
         ]);
 
         $oldStatus = $ticket->status;
-        $ticket->update(['status' => $validated['status']]);
+        $newStatus = $validated['status'];
+
+        // Verificar si el estado realmente cambió
+        if ($oldStatus === $newStatus) {
+            return back()->with('info', 'El ticket ya tiene ese estado.');
+        }
+
+        // Obtener labels antes de actualizar
+        $oldStatusLabel = $ticket->status_label;
+
+        $ticket->update(['status' => $newStatus]);
 
         // Log status change
-        TicketActivity::logStatusChanged($ticket, $oldStatus, $validated['status'], auth()->user());
+        TicketActivity::logStatusChanged($ticket, $oldStatus, $newStatus, auth()->user());
 
         // Agregar comentario automático del cambio de estado
         $ticket->addComment(
-            "Estado cambiado de '{$ticket->getStatusLabelAttribute()}' a '{$ticket->status_label}'",
+            "Estado cambiado de '{$oldStatusLabel}' a '{$ticket->status_label}'",
             'status_change',
             true
         );
 
         // Notificar cambio de estado
-        \App\Models\Notification::notifyTicketStatusChanged($ticket, $oldStatus, $validated['status'], auth()->user());
+        \App\Models\Notification::notifyTicketStatusChanged($ticket, $oldStatus, $newStatus, auth()->user());
 
         return back()->with('success', 'Estado actualizado exitosamente.');
     }
@@ -299,6 +309,11 @@ class TicketController extends Controller
 
         $oldAssignee = $ticket->assigned_to ? User::find($ticket->assigned_to) : null;
         $newAssignee = User::find($validated['assigned_to']);
+
+        // Verificar si está asignando al mismo usuario
+        if ($oldAssignee && $oldAssignee->id === $newAssignee->id) {
+            return back()->with('info', "El ticket ya está asignado a {$newAssignee->name}.");
+        }
 
         // Si ya estaba asignado, es una reasignación
         if ($oldAssignee && $oldAssignee->id !== $newAssignee->id) {

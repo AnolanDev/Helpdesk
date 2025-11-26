@@ -178,32 +178,30 @@
                 </div>
 
                 <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
-                  <div class="flex flex-col gap-3 sm:flex-row sm:items-center sm:gap-4">
-                    <label v-if="isTech || isAdmin" class="flex items-center gap-2">
-                      <input
-                        v-model="commentForm.is_private"
-                        type="checkbox"
-                        class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 h-5 w-5"
-                      />
-                      <span class="text-sm text-secondary-700">Nota privada</span>
+                  <div class="flex-1">
+                    <label for="comment-type" class="block text-sm font-medium text-secondary-700 mb-1">
+                      Tipo de comentario
                     </label>
-
-                    <div class="flex-1 sm:flex-initial">
-                      <select
-                        v-model="commentForm.type"
-                        class="w-full rounded-lg border-secondary-300 py-2.5 text-base md:text-sm focus:border-primary-500 focus:ring-primary-500"
-                      >
-                        <option value="public">Público</option>
-                        <option v-if="isTech || isAdmin" value="internal">Interno</option>
-                        <option v-if="isTech || isAdmin" value="solution">Solución</option>
-                      </select>
-                    </div>
+                    <select
+                      id="comment-type"
+                      v-model="commentForm.type"
+                      class="w-full sm:w-auto sm:min-w-[200px] rounded-lg border-secondary-300 py-2.5 text-base md:text-sm focus:border-primary-500 focus:ring-primary-500"
+                    >
+                      <option value="public">📢 Público - El usuario lo puede ver</option>
+                      <option v-if="isTech || isAdmin" value="internal">🔒 Interno - Solo equipo técnico</option>
+                      <option v-if="isTech || isAdmin" value="solution">✅ Solución - Marca cómo se resolvió</option>
+                    </select>
+                    <p class="mt-1 text-xs text-secondary-500">
+                      <span v-if="commentForm.type === 'public'">Visible para el usuario que reportó el ticket</span>
+                      <span v-else-if="commentForm.type === 'internal'">Solo visible para técnicos y administradores</span>
+                      <span v-else-if="commentForm.type === 'solution'">Documenta la solución aplicada (visible para todos)</span>
+                    </p>
                   </div>
 
                   <button
                     type="submit"
                     :disabled="commentForm.processing || !commentForm.comment"
-                    class="w-full sm:w-auto inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
+                    class="w-full sm:w-auto sm:mt-6 inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-2.5 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:opacity-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 min-h-[44px]"
                   >
                     <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                       <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
@@ -390,10 +388,14 @@ const assignForm = useForm({
 });
 
 const addComment = () => {
+  // Establecer is_private automáticamente basado en el tipo
+  commentForm.is_private = commentForm.type === 'internal';
+
   commentForm.post(route('tickets.comments', props.ticket.id), {
     preserveScroll: true,
     onSuccess: () => {
       commentForm.reset();
+      commentForm.type = 'public'; // Reset al tipo por defecto
     },
   });
 };
@@ -401,7 +403,6 @@ const addComment = () => {
 const requestMoreInfo = () => {
   commentForm.comment = '🔔 Necesito información adicional para poder resolver este ticket.\n\nPor favor, proporciona más detalles sobre:\n- ';
   commentForm.type = 'public';
-  commentForm.is_private = false;
   // Focus en el textarea
   setTimeout(() => {
     document.getElementById('comment')?.focus();

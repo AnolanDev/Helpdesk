@@ -229,6 +229,18 @@ const props = defineProps({
   users: Array,
 });
 
+// Helper function - debe estar antes de ser usada
+const formatDateForInput = (date) => {
+  // Convertir fecha a formato datetime-local (YYYY-MM-DDTHH:mm)
+  const d = new Date(date);
+  const year = d.getFullYear();
+  const month = String(d.getMonth() + 1).padStart(2, '0');
+  const day = String(d.getDate()).padStart(2, '0');
+  const hours = String(d.getHours()).padStart(2, '0');
+  const minutes = String(d.getMinutes()).padStart(2, '0');
+  return `${year}-${month}-${day}T${hours}:${minutes}`;
+};
+
 const form = useForm({
   title: props.ticket.title,
   description: props.ticket.description,
@@ -251,16 +263,5 @@ const confirmDelete = () => {
   if (confirm('¿Estás seguro de que deseas eliminar este ticket? Esta acción no se puede deshacer.')) {
     router.delete(route('tickets.destroy', props.ticket.id));
   }
-};
-
-const formatDateForInput = (date) => {
-  // Convertir fecha a formato datetime-local (YYYY-MM-DDTHH:mm)
-  const d = new Date(date);
-  const year = d.getFullYear();
-  const month = String(d.getMonth() + 1).padStart(2, '0');
-  const day = String(d.getDate()).padStart(2, '0');
-  const hours = String(d.getHours()).padStart(2, '0');
-  const minutes = String(d.getMinutes()).padStart(2, '0');
-  return `${year}-${month}-${day}T${hours}:${minutes}`;
 };
 </script>

@@ -114,7 +114,7 @@ class TicketActivity extends Model
 
     public function getTimeAgoAttribute(): string
     {
-        $diff = $this->created_at->diffInMinutes(now());
+        $diff = (int) $this->created_at->diffInMinutes(now());
 
         if ($diff < 1) {
             return 'Ahora mismo';
