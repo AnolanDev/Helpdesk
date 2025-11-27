@@ -14,9 +14,9 @@
             </svg>
           </button>
 
-          <div class="flex items-center gap-2">
-            <img src="/images/logo.jpg" alt="Logo" class="h-8 w-8 rounded-lg object-cover shadow-sm" />
-            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">Infra Manager</h1>
+          <div class="flex items-center gap-3">
+            <img src="/images/logo.jpg" alt="Logo" class="h-10 w-10 rounded-lg object-cover shadow-sm" />
+            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">HelpDesk</h1>
           </div>
         </div>
 

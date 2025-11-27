@@ -8,8 +8,8 @@ import { Link } from '@inertiajs/vue3';
         <div class="hidden w-1/2 bg-gradient-to-br from-primary-600 to-primary-800 p-12 lg:flex lg:flex-col lg:justify-between">
             <div>
                 <Link href="/" class="flex items-center gap-3 text-white">
-                    <img src="/images/logo.jpg" alt="Logo" class="h-12 w-12 rounded-xl object-cover shadow-lg" />
-                    <span class="text-2xl font-bold">Infra Manager</span>
+                    <img src="/images/logo.jpg" alt="Logo" class="h-16 w-16 rounded-xl object-cover shadow-lg" />
+                    <span class="text-2xl font-bold">HelpDesk</span>
                 </Link>
             </div>
 
@@ -37,7 +37,7 @@ import { Link } from '@inertiajs/vue3';
             </div>
 
             <div class="text-sm text-primary-200">
-                © 2025 Infra Manager. Todos los derechos reservados.
+                © 2025 HelpDesk. Todos los derechos reservados.
             </div>
         </div>
 
@@ -47,8 +47,8 @@ import { Link } from '@inertiajs/vue3';
                 <!-- Logo para móvil -->
                 <div class="lg:hidden">
                     <Link href="/" class="flex items-center justify-center gap-3">
-                        <img src="/images/logo.jpg" alt="Logo" class="h-12 w-12 rounded-xl object-cover shadow-lg" />
-                        <span class="text-2xl font-bold text-secondary-900">Infra Manager</span>
+                        <img src="/images/logo.jpg" alt="Logo" class="h-16 w-16 rounded-xl object-cover shadow-lg" />
+                        <span class="text-2xl font-bold text-secondary-900">HelpDesk</span>
                     </Link>
                 </div>
 
