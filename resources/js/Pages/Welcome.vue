@@ -30,18 +30,10 @@ defineProps({
 
                     <div v-if="canLogin" class="flex items-center gap-4">
                         <Link
-                            v-if="canLogin"
                             :href="route('login')"
-                            class="text-sm font-medium text-secondary-600 transition-colors hover:text-secondary-900"
-                        >
-                            Iniciar Sesión
-                        </Link>
-                        <Link
-                            v-if="canRegister"
-                            :href="route('register')"
                             class="rounded-lg bg-primary-600 px-4 py-2 text-sm font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
                         >
-                            Registrarse
+                            Iniciar Sesión
                         </Link>
                     </div>
                 </div>
@@ -70,24 +62,13 @@ defineProps({
                         </p>
                         <div class="mt-8 flex flex-col gap-4 sm:flex-row">
                             <Link
-                                v-if="canRegister"
-                                :href="route('register')"
-                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
-                            >
-                                Comenzar Ahora
-                                <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 7l5 5m0 0l-5 5m5-5H6" />
-                                </svg>
-                            </Link>
-                            <Link
                                 v-if="canLogin"
                                 :href="route('login')"
-                                class="inline-flex items-center justify-center gap-2 rounded-lg border border-secondary-300 bg-white px-6 py-3 text-base font-medium text-secondary-700 shadow-sm transition-all hover:bg-secondary-50"
+                                class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-6 py-3 text-base font-medium text-white shadow-sm transition-all hover:bg-primary-700 hover:shadow-md"
                             >
-                                Ver Demo
+                                Iniciar Sesión
                                 <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z" />
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 16l-4-4m0 0l4-4m-4 4h14m-5 4v1a3 3 0 01-3 3H6a3 3 0 01-3-3V7a3 3 0 013-3h7a3 3 0 013 3v1" />
                                 </svg>
                             </Link>
                         </div>

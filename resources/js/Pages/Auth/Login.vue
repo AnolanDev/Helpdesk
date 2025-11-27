@@ -110,16 +110,10 @@ const submit = () => {
                 </PrimaryButton>
             </form>
 
-            <!-- Register Link -->
+            <!-- Información de contacto para nuevos usuarios -->
             <div class="text-center">
                 <p class="text-sm text-secondary-600">
-                    ¿No tienes una cuenta?
-                    <Link
-                        :href="route('register')"
-                        class="font-medium text-primary-600 hover:text-primary-700 focus:outline-none focus:underline"
-                    >
-                        Regístrate aquí
-                    </Link>
+                    ¿No tienes acceso? Contacta al administrador del sistema
                 </p>
             </div>
         </div>
