@@ -1,9 +1,9 @@
 <template>
   <header class="sticky top-0 z-50 w-full border-b border-secondary-200 bg-white/95 backdrop-blur-sm shadow-sm">
     <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-20 items-center justify-between">
+      <div class="flex h-16 items-center justify-between">
         <!-- Logo y botón menú -->
-        <div class="flex items-center gap-4">
+        <div class="flex items-center gap-3">
           <button
             @click="$emit('toggle-sidebar')"
             class="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 transition-colors hover:bg-secondary-100 lg:hidden"
@@ -14,10 +14,10 @@
             </svg>
           </button>
 
-          <div class="flex items-center gap-3">
-            <img src="/images/logo.svg" alt="Logo" class="h-12 w-12 rounded-lg object-cover shadow-sm" />
-            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">HelpTech</h1>
-          </div>
+          <Link :href="route('dashboard')" class="flex items-center gap-3">
+            <img src="/images/logo.svg" alt="Logo" class="h-10 w-10 rounded-lg object-cover shadow-sm" />
+            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl leading-none">HelpTech</h1>
+          </Link>
         </div>
 
         <!-- Usuario y acciones -->
@@ -27,12 +27,12 @@
             <!-- Crear Ticket -->
             <Link
               :href="route('tickets.create')"
-              class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-700"
+              class="inline-flex h-10 items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-700"
             >
-              <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
               </svg>
-              <span>Nuevo Ticket</span>
+              <span class="leading-none">Nuevo Ticket</span>
             </Link>
           </div>
 
@@ -40,7 +40,7 @@
           <div class="relative" ref="notificationDropdown">
             <button
               @click="toggleNotifications"
-              class="relative rounded-lg border border-secondary-300 bg-white p-2.5 text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50"
+              class="relative flex h-10 w-10 items-center justify-center rounded-lg border border-secondary-300 bg-white text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50"
               title="Notificaciones"
             >
               <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -137,19 +137,19 @@
           <div class="relative" ref="dropdown">
             <button
               @click="toggleDropdown"
-              class="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50"
+              class="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50 h-10"
             >
               <div class="hidden items-center gap-3 sm:flex">
-                <div class="text-right">
-                  <p class="text-sm font-medium text-secondary-900">{{ user?.name || 'Usuario' }}</p>
-                  <p class="text-xs text-secondary-500">{{ userTypeLabel }}</p>
+                <div class="text-right leading-tight">
+                  <p class="text-sm font-medium text-secondary-900 leading-tight">{{ user?.name || 'Usuario' }}</p>
+                  <p class="text-xs text-secondary-500 leading-tight">{{ userTypeLabel }}</p>
                 </div>
-                <div class="flex h-8 w-8 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-sm font-medium text-white shadow-sm">
+                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-xs font-medium text-white shadow-sm">
                   {{ initials }}
                 </div>
               </div>
               <svg
-                class="h-4 w-4 transition-transform duration-200"
+                class="h-4 w-4 flex-shrink-0 transition-transform duration-200"
                 :class="{ 'rotate-180': isDropdownOpen }"
                 fill="none"
                 viewBox="0 0 24 24"
