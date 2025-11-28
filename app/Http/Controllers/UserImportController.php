@@ -125,7 +125,7 @@ class UserImportController extends Controller
     /**
      * Validar archivo antes de importar (preview)
      */
-    public function validate(Request $request)
+    public function preview(Request $request)
     {
         $request->validate([
             'file' => 'required|file|mimes:xlsx,xls,csv|max:5120',
