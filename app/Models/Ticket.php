@@ -244,24 +244,30 @@ class Ticket extends Model
         // Obtener iniciales de la empresa
         $iniciales = static::getEmpresaIniciales($empresa);
 
-        // Formato corto: ASE-0001
-        // Consecutivo diario (se reinicia cada día)
-        $today = date('Y-m-d');
-        $lastTicket = static::whereDate('created_at', $today)
-            ->where('ticket_number', 'like', $iniciales . '-%')
-            ->orderBy('id', 'desc')
-            ->first();
+        // Formato: ASE-20251128-0001 (incluye fecha para unicidad)
+        $fecha = date('Ymd'); // YYYYMMDD
 
-        $consecutivo = 1;
-        if ($lastTicket) {
-            // Extraer el número después del guion
-            $parts = explode('-', $lastTicket->ticket_number);
-            if (count($parts) === 2 && is_numeric($parts[1])) {
-                $consecutivo = (int) $parts[1] + 1;
+        // Obtener todos los tickets del día con el mismo prefijo
+        $tickets = static::where('ticket_number', 'like', $iniciales . '-' . $fecha . '-%')
+            ->pluck('ticket_number');
+
+        $maxConsecutivo = 0;
+
+        // Encontrar el número más alto del día
+        foreach ($tickets as $ticketNumber) {
+            // Formato esperado: ASE-20251128-0001
+            $parts = explode('-', $ticketNumber);
+            if (count($parts) === 3 && is_numeric($parts[2])) {
+                $numero = (int) $parts[2];
+                if ($numero > $maxConsecutivo) {
+                    $maxConsecutivo = $numero;
+                }
             }
         }
 
-        return sprintf('%s-%04d', $iniciales, $consecutivo);
+        $consecutivo = $maxConsecutivo + 1;
+
+        return sprintf('%s-%s-%04d', $iniciales, $fecha, $consecutivo);
     }
 
     public static function getEmpresaIniciales(?string $empresa): string

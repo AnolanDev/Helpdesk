@@ -1,26 +1,25 @@
 <template>
-  <header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
-    <div class="h-16 flex items-center justify-between px-6">
-      <!-- Logo - Extremo izquierdo -->
-      <div class="flex items-center">
-        <button
-          @click="$emit('toggle-sidebar')"
-          class="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden mr-2"
-          aria-label="Toggle menu"
-        >
-          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
-          </svg>
-        </button>
+  <header class="sticky top-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
+    <!-- Logo - Extremo izquierdo -->
+    <div class="flex items-center">
+      <button
+        @click="$emit('toggle-sidebar')"
+        class="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden mr-2"
+        aria-label="Toggle menu"
+      >
+        <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+          <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+        </svg>
+      </button>
 
-        <Link :href="route('dashboard')" class="flex items-center">
-          <img src="/images/logo.svg" alt="HelpTech" class="h-8 w-auto" />
-          <span class="ml-2 text-xl font-semibold text-gray-900">HelpTech</span>
-        </Link>
-      </div>
+      <Link :href="route('dashboard')" class="flex items-center">
+        <img src="/images/logo.svg" alt="HelpTech" class="h-8 w-auto" />
+        <span class="ml-2 text-xl font-semibold text-gray-900">HelpTech</span>
+      </Link>
+    </div>
 
-      <!-- Usuario - Extremo derecho -->
-      <div class="flex items-center gap-4">
+    <!-- Usuario - Extremo derecho -->
+    <div class="flex items-center gap-4">
         <!-- Botón Nuevo Ticket -->
         <Link
           :href="route('tickets.create')"
@@ -246,7 +245,6 @@
             </Transition>
           </div>
       </div>
-    </div>
   </header>
 </template>
 

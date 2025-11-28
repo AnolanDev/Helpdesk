@@ -64,14 +64,21 @@ class TicketController extends Controller
             });
         }
 
+        // Filtro de tickets vencidos
+        if ($request->filled('show_overdue') && $request->show_overdue) {
+            $query->overdue();
+        }
+
         // Filtro de tickets abiertos/cerrados
         if ($request->filled('show_closed')) {
             if (!$request->show_closed) {
                 $query->open();
             }
         } else {
-            // Por defecto, mostrar solo tickets abiertos
-            $query->open();
+            // Por defecto, mostrar solo tickets abiertos (a menos que se esté filtrando por vencidos)
+            if (!$request->filled('show_overdue') || !$request->show_overdue) {
+                $query->open();
+            }
         }
 
         // Ordenamiento
@@ -85,6 +92,8 @@ class TicketController extends Controller
             'title',
             'status',
             'priority',
+            'empresa',
+            'sucursal',
             'created_at',
             'updated_at',
         ];
@@ -110,7 +119,7 @@ class TicketController extends Controller
 
         return Inertia::render('Tickets/Index', [
             'tickets' => $tickets,
-            'filters' => $request->only(['status', 'priority', 'category', 'assigned_to', 'search', 'show_closed', 'sort_by', 'sort_dir']),
+            'filters' => $request->only(['status', 'priority', 'category', 'assigned_to', 'search', 'show_closed', 'show_overdue', 'sort_by', 'sort_dir']),
             'statuses' => Ticket::getStatuses(),
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
@@ -159,13 +168,30 @@ class TicketController extends Controller
             'assigned_to' => 'nullable|exists:users,id',
         ]);
 
-        $ticket = Ticket::create([
-            ...$validated,
-            'user_id' => auth()->id(),
-            'status' => $validated['assigned_to'] ?? null
-                ? Ticket::STATUS_OPEN
-                : Ticket::STATUS_NEW,
-        ]);
+        // Intentar crear el ticket con reintentos en caso de duplicado
+        $maxRetries = 3;
+        $ticket = null;
+
+        for ($attempt = 1; $attempt <= $maxRetries; $attempt++) {
+            try {
+                $ticket = Ticket::create([
+                    ...$validated,
+                    'user_id' => auth()->id(),
+                    'status' => $validated['assigned_to'] ?? null
+                        ? Ticket::STATUS_OPEN
+                        : Ticket::STATUS_NEW,
+                ]);
+
+                break; // Si se crea exitosamente, salir del loop
+            } catch (\Illuminate\Database\UniqueConstraintViolationException $e) {
+                // Si es el último intento, lanzar el error
+                if ($attempt === $maxRetries) {
+                    throw $e;
+                }
+                // Si no, esperar un poco y reintentar (para evitar race conditions)
+                usleep(100000); // 100ms
+            }
+        }
 
         // Log ticket creation
         TicketActivity::logCreated($ticket, auth()->user());

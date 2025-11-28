@@ -95,11 +95,14 @@
           </Card>
         </button>
 
-        <div class="relative">
+        <button
+          @click="filterOverdue"
+          class="relative text-left transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg"
+        >
           <div v-if="stats.overdue > 0" class="absolute -top-2 -right-2 z-10 flex h-6 w-6 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white animate-pulse">
             !
           </div>
-          <Card variant="elevated" :class="stats.overdue > 0 ? 'ring-2 ring-red-500' : ''">
+          <Card variant="elevated" hoverable :class="stats.overdue > 0 ? 'ring-2 ring-red-500' : ''">
             <div class="flex items-center justify-between">
               <div>
                 <p class="text-sm font-medium text-secondary-600">Vencidos</p>
@@ -112,7 +115,7 @@
               </div>
             </div>
           </Card>
-        </div>
+        </button>
       </div>
 
       <!-- Filters and Search -->
@@ -376,13 +379,29 @@
                 </th>
 
                 <!-- Columna Empresa -->
-                <th class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Empresa
+                <th
+                  @click="sortBy('empresa')"
+                  class="cursor-pointer px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-secondary-500 hover:bg-secondary-100 transition-colors"
+                >
+                  <div class="flex items-center gap-1">
+                    Empresa
+                    <svg v-if="form.sort_by === 'empresa'" class="h-4 w-4" :class="form.sort_dir === 'asc' ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                  </div>
                 </th>
 
                 <!-- Columna Sucursal -->
-                <th class="px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Sucursal
+                <th
+                  @click="sortBy('sucursal')"
+                  class="cursor-pointer px-6 py-4 text-left text-xs font-medium uppercase tracking-wider text-secondary-500 hover:bg-secondary-100 transition-colors"
+                >
+                  <div class="flex items-center gap-1">
+                    Sucursal
+                    <svg v-if="form.sort_by === 'sucursal'" class="h-4 w-4" :class="form.sort_dir === 'asc' ? '' : 'rotate-180'" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 15l7-7 7 7" />
+                    </svg>
+                  </div>
                 </th>
 
                 <!-- Columna Asignado -->
@@ -555,7 +574,7 @@
 
                       <!-- Botón de menú -->
                       <button
-                        @click="toggleDropdown(ticket.id)"
+                        @click.stop="toggleDropdown(ticket.id)"
                         class="inline-flex items-center rounded-lg border border-secondary-300 bg-white p-1.5 text-secondary-700 shadow-sm transition-all hover:bg-secondary-50 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2"
                       >
                         <svg class="h-4 w-4" fill="currentColor" viewBox="0 0 20 20">
@@ -662,6 +681,7 @@ const form = reactive({
   category: props.filters.category || '',
   assigned_to: props.filters.assigned_to || '',
   show_closed: props.filters.show_closed || false,
+  show_overdue: props.filters.show_overdue || false,
   sort_by: props.filters.sort_by || 'created_at',
   sort_dir: props.filters.sort_dir || 'desc',
 });
@@ -690,6 +710,17 @@ const filterByStatus = (status) => {
   applyFilters();
 };
 
+// Filtro de tickets vencidos
+const filterOverdue = () => {
+  // Limpiar otros filtros y aplicar solo el filtro de vencidos
+  form.status = '';
+  form.priority = '';
+  form.category = '';
+  form.assigned_to = '';
+  form.show_overdue = true;
+  applyFilters();
+};
+
 // Ordenamiento
 const sortBy = (column) => {
   if (form.sort_by === column) {
@@ -715,6 +746,7 @@ const resetFilters = () => {
   form.category = '';
   form.assigned_to = '';
   form.show_closed = false;
+  form.show_overdue = false;
   form.sort_by = 'created_at';
   form.sort_dir = 'desc';
   applyFilters();
