@@ -30,14 +30,15 @@
         <Link href="/tickets" class="block">
           <Card variant="elevated" hoverable>
             <div class="flex items-center justify-between">
-              <div>
+              <div class="flex-1">
                 <p class="text-sm font-medium text-secondary-600">Tickets Abiertos</p>
                 <p class="mt-2 text-3xl font-bold text-secondary-900">{{ stats.open_tickets }}</p>
-                <p v-if="stats.urgent_tickets > 0" class="mt-2 flex items-center text-sm text-orange-600">
+                <p class="mt-2 flex items-center text-sm min-h-[20px]" :class="stats.urgent_tickets > 0 ? 'text-orange-600' : 'text-secondary-600'">
                   <svg class="mr-1 h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  {{ stats.urgent_tickets }} urgente{{ stats.urgent_tickets > 1 ? 's' : '' }}
+                  <span v-if="stats.urgent_tickets > 0">{{ stats.urgent_tickets }} urgente{{ stats.urgent_tickets > 1 ? 's' : '' }}</span>
+                  <span v-else>Sin urgentes</span>
                 </p>
               </div>
               <div class="rounded-full bg-orange-100 p-3">

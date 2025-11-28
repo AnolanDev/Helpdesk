@@ -15,7 +15,7 @@
           </button>
 
           <div class="flex items-center gap-3">
-            <img src="/images/logo.svg" alt="Logo" class="h-16 w-16 rounded-lg object-cover shadow-sm" />
+            <img src="/images/logo.svg" alt="Logo" class="h-12 w-12 rounded-lg object-cover shadow-sm" />
             <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">HelpTech</h1>
           </div>
         </div>
