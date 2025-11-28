@@ -4,6 +4,7 @@ use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
 use App\Http\Controllers\UserController;
+use App\Http\Controllers\UserImportController;
 use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\SettingController;
 use Illuminate\Foundation\Application;
@@ -42,6 +43,13 @@ Route::middleware('auth')->group(function () {
 
     // Users Routes
     Route::resource('users', UserController::class);
+
+    // User Import Routes - Solo administradores
+    Route::get('/users-import', [UserImportController::class, 'index'])->name('users.import.index');
+    Route::get('/users-import/template', [UserImportController::class, 'downloadTemplate'])->name('users.import.template');
+    Route::post('/users-import', [UserImportController::class, 'import'])->name('users.import.store');
+    Route::get('/users-import/{userImport}', [UserImportController::class, 'show'])->name('users.import.show');
+    Route::delete('/users-import/{userImport}', [UserImportController::class, 'destroy'])->name('users.import.destroy');
 
     // Notifications Routes
     Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
