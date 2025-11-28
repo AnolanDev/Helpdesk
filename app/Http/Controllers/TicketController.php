@@ -21,8 +21,7 @@ class TicketController extends Controller
         $this->authorize('viewAny', Ticket::class);
 
         $user = auth()->user();
-        $query = Ticket::with(['user', 'assignedUser'])
-            ->orderBy('created_at', 'desc');
+        $query = Ticket::with(['user', 'assignedUser']);
 
         // Filtrar tickets según el tipo de usuario
         if ($user->isUsuarioFinal()) {
@@ -75,6 +74,27 @@ class TicketController extends Controller
             $query->open();
         }
 
+        // Ordenamiento
+        $sortBy = $request->get('sort_by', 'created_at');
+        $sortDir = $request->get('sort_dir', 'desc');
+
+        // Validar columnas permitidas para ordenamiento
+        $allowedSortColumns = [
+            'user_name',
+            'ticket_number',
+            'title',
+            'status',
+            'priority',
+            'created_at',
+            'updated_at',
+        ];
+
+        if (in_array($sortBy, $allowedSortColumns)) {
+            $query->orderBy($sortBy, $sortDir);
+        } else {
+            $query->orderBy('created_at', 'desc');
+        }
+
         $tickets = $query->paginate(15)->withQueryString();
 
         // Calcular estadísticas según los permisos del usuario
@@ -90,7 +110,7 @@ class TicketController extends Controller
 
         return Inertia::render('Tickets/Index', [
             'tickets' => $tickets,
-            'filters' => $request->only(['status', 'priority', 'category', 'assigned_to', 'search', 'show_closed']),
+            'filters' => $request->only(['status', 'priority', 'category', 'assigned_to', 'search', 'show_closed', 'sort_by', 'sort_dir']),
             'statuses' => Ticket::getStatuses(),
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
