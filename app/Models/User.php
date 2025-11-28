@@ -4,13 +4,15 @@ namespace App\Models;
 
 // use Illuminate\Contracts\Auth\MustVerifyEmail;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
+use Illuminate\Database\Eloquent\Relations\HasMany;
+use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Foundation\Auth\User as Authenticatable;
 use Illuminate\Notifications\Notifiable;
 
 class User extends Authenticatable
 {
     /** @use HasFactory<\Database\Factories\UserFactory> */
-    use HasFactory, Notifiable;
+    use HasFactory, Notifiable, SoftDeletes;
 
     /**
      * The attributes that are mass assignable.
@@ -68,6 +70,66 @@ class User extends Authenticatable
             'last_synced_at' => 'datetime',
         ];
     }
+
+    /**
+     * ==============================================
+     * RELACIONES ELOQUENT
+     * ==============================================
+     */
+
+    /**
+     * Tickets reportados por el usuario
+     */
+    public function tickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'user_id');
+    }
+
+    /**
+     * Tickets asignados al usuario (como técnico)
+     */
+    public function assignedTickets(): HasMany
+    {
+        return $this->hasMany(Ticket::class, 'assigned_to');
+    }
+
+    /**
+     * Comentarios creados por el usuario
+     */
+    public function ticketComments(): HasMany
+    {
+        return $this->hasMany(TicketComment::class, 'user_id');
+    }
+
+    /**
+     * Actividades registradas por el usuario
+     */
+    public function ticketActivities(): HasMany
+    {
+        return $this->hasMany(TicketActivity::class, 'user_id');
+    }
+
+    /**
+     * Notificaciones del usuario
+     */
+    public function notifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'user_id');
+    }
+
+    /**
+     * Notificaciones donde el usuario fue quien realizó la acción
+     */
+    public function actionedNotifications(): HasMany
+    {
+        return $this->hasMany(Notification::class, 'action_by');
+    }
+
+    /**
+     * ==============================================
+     * SCOPES
+     * ==============================================
+     */
 
     /**
      * Scope para obtener solo usuarios activos
