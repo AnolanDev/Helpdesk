@@ -672,6 +672,10 @@ const props = defineProps({
   categories: Object,
   users: Array,
   stats: Object,
+  slaWarningHours: {
+    type: Number,
+    default: 24
+  },
 });
 
 const form = reactive({
@@ -916,6 +920,6 @@ const isNearDue = (dueDate) => {
   const now = new Date();
   const hoursUntilDue = (due - now) / (1000 * 60 * 60);
 
-  return hoursUntilDue > 0 && hoursUntilDue < 24;
+  return hoursUntilDue > 0 && hoursUntilDue < props.slaWarningHours;
 };
 </script>

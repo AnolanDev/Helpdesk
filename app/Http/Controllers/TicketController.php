@@ -124,6 +124,7 @@ class TicketController extends Controller
             'priorities' => Ticket::getPriorities(),
             'categories' => Ticket::getCategories(),
             'users' => User::active()->techs()->orderBy('name')->get(['id', 'name']),
+            'slaWarningHours' => \App\Models\Setting::get('sla_warning_hours', 24),
             'stats' => [
                 'open' => (clone $statsQuery)->open()->count(),
                 'in_progress' => (clone $statsQuery)->byStatus(Ticket::STATUS_IN_PROGRESS)->count(),
@@ -274,6 +275,11 @@ class TicketController extends Controller
         // Track changes for activity log
         $oldPriority = $ticket->priority;
         $oldCategory = $ticket->category;
+
+        // Recalcular due_date si cambió la prioridad y no se especificó un due_date manual
+        if ($oldPriority !== $validated['priority'] && !$request->filled('due_date')) {
+            $validated['due_date'] = Ticket::calculateDueDate($validated['priority']);
+        }
 
         $ticket->update($validated);
 
