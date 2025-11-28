@@ -1,58 +1,54 @@
 <template>
-  <header class="sticky top-0 z-50 w-full border-b border-secondary-200 bg-white/95 backdrop-blur-sm shadow-sm">
-    <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
-        <!-- Logo y botón menú -->
-        <div class="flex items-center gap-3">
+  <header class="sticky top-0 z-50 w-full bg-white border-b border-gray-200 shadow-sm">
+    <div class="h-16 flex items-center justify-between px-6">
+      <!-- Logo - Extremo izquierdo -->
+      <div class="flex items-center">
+        <button
+          @click="$emit('toggle-sidebar')"
+          class="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden mr-2"
+          aria-label="Toggle menu"
+        >
+          <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+          </svg>
+        </button>
+
+        <Link :href="route('dashboard')" class="flex items-center">
+          <img src="/images/logo.svg" alt="HelpTech" class="h-8 w-auto" />
+          <span class="ml-2 text-xl font-semibold text-gray-900">HelpTech</span>
+        </Link>
+      </div>
+
+      <!-- Usuario - Extremo derecho -->
+      <div class="flex items-center gap-4">
+        <!-- Botón Nuevo Ticket -->
+        <Link
+          :href="route('tickets.create')"
+          class="hidden md:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-primary-700 transition-colors"
+        >
+          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
+          </svg>
+          Nuevo Ticket
+        </Link>
+
+        <!-- Notificaciones -->
+        <div class="relative" ref="notificationDropdown">
           <button
-            @click="$emit('toggle-sidebar')"
-            class="inline-flex items-center justify-center rounded-lg p-2 text-secondary-700 transition-colors hover:bg-secondary-100 lg:hidden"
-            aria-label="Toggle menu"
+            @click="toggleNotifications"
+            class="relative flex items-center justify-center h-10 w-10 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            title="Notificaciones"
           >
-            <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6h16M4 12h16M4 18h16" />
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
             </svg>
+            <span
+              v-if="unreadCount > 0"
+              class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white"
+            >
+              {{ unreadCount > 9 ? '9+' : unreadCount }}
+            </span>
           </button>
-
-          <Link :href="route('dashboard')" class="flex items-center gap-3">
-            <img src="/images/logo.svg" alt="Logo" class="h-10 w-10 rounded-lg object-cover shadow-sm" />
-            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl leading-none">HelpTech</h1>
-          </Link>
-        </div>
-
-        <!-- Usuario y acciones -->
-        <div class="flex items-center gap-3">
-          <!-- Quick Actions -->
-          <div class="hidden items-center gap-2 md:flex">
-            <!-- Crear Ticket -->
-            <Link
-              :href="route('tickets.create')"
-              class="inline-flex h-10 items-center gap-2 rounded-lg bg-primary-600 px-3 py-2 text-sm font-medium text-white shadow-sm transition-all duration-200 hover:bg-primary-700"
-            >
-              <svg class="h-4 w-4 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-              </svg>
-              <span class="leading-none">Nuevo Ticket</span>
-            </Link>
-          </div>
-
-          <!-- Notifications Bell -->
-          <div class="relative" ref="notificationDropdown">
-            <button
-              @click="toggleNotifications"
-              class="relative flex h-10 w-10 items-center justify-center rounded-lg border border-secondary-300 bg-white text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50"
-              title="Notificaciones"
-            >
-              <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
-              </svg>
-              <span
-                v-if="unreadCount > 0"
-                class="absolute -top-1 -right-1 flex h-5 w-5 items-center justify-center rounded-full bg-red-600 text-xs font-bold text-white shadow-sm"
-              >
-                {{ unreadCount > 9 ? '9+' : unreadCount }}
-              </span>
-            </button>
 
             <!-- Notifications Dropdown -->
             <Transition
@@ -133,31 +129,31 @@
             </Transition>
           </div>
 
-          <!-- User Menu Dropdown -->
-          <div class="relative" ref="dropdown">
-            <button
-              @click="toggleDropdown"
-              class="flex items-center gap-2 rounded-lg border border-secondary-300 bg-white px-3 py-2 text-sm font-medium text-secondary-700 shadow-sm transition-all duration-200 hover:bg-secondary-50 h-10"
-            >
-              <div class="hidden items-center gap-3 sm:flex">
-                <div class="text-right leading-tight">
-                  <p class="text-sm font-medium text-secondary-900 leading-tight">{{ user?.name || 'Usuario' }}</p>
-                  <p class="text-xs text-secondary-500 leading-tight">{{ userTypeLabel }}</p>
-                </div>
-                <div class="flex h-8 w-8 flex-shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-500 to-primary-600 text-xs font-medium text-white shadow-sm">
-                  {{ initials }}
-                </div>
+        <!-- Usuario -->
+        <div class="relative" ref="dropdown">
+          <button
+            @click="toggleDropdown"
+            class="flex items-center gap-2"
+          >
+            <div class="hidden sm:flex items-center gap-2">
+              <div class="text-right">
+                <div class="text-sm font-medium text-gray-900">{{ user?.name || 'Usuario' }}</div>
+                <div class="text-xs text-gray-500">{{ userTypeLabel }}</div>
               </div>
-              <svg
-                class="h-4 w-4 flex-shrink-0 transition-transform duration-200"
-                :class="{ 'rotate-180': isDropdownOpen }"
-                fill="none"
-                viewBox="0 0 24 24"
-                stroke="currentColor"
-              >
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
-              </svg>
-            </button>
+              <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-semibold text-sm">
+                {{ initials }}
+              </div>
+            </div>
+            <svg
+              class="h-4 w-4 text-gray-600 transition-transform duration-200"
+              :class="{ 'rotate-180': isDropdownOpen }"
+              fill="none"
+              viewBox="0 0 24 24"
+              stroke="currentColor"
+            >
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+            </svg>
+          </button>
 
             <!-- Dropdown Menu -->
             <Transition
@@ -249,7 +245,6 @@
               </div>
             </Transition>
           </div>
-        </div>
       </div>
     </div>
   </header>
