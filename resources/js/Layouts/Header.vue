@@ -1,7 +1,7 @@
 <template>
   <header class="sticky top-0 z-50 w-full border-b border-secondary-200 bg-white/95 backdrop-blur-sm shadow-sm">
     <div class="mx-auto max-w-screen-2xl px-4 sm:px-6 lg:px-8">
-      <div class="flex h-16 items-center justify-between">
+      <div class="flex h-20 items-center justify-between">
         <!-- Logo y botón menú -->
         <div class="flex items-center gap-4">
           <button
@@ -15,8 +15,8 @@
           </button>
 
           <div class="flex items-center gap-3">
-            <img src="/images/logo.jpg" alt="Logo" class="h-10 w-10 rounded-lg object-cover shadow-sm" />
-            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">HelpDesk</h1>
+            <img src="/images/logo.svg" alt="Logo" class="h-16 w-16 rounded-lg object-cover shadow-sm" />
+            <h1 class="text-lg font-semibold text-secondary-900 sm:text-xl">HelpTech</h1>
           </div>
         </div>
 

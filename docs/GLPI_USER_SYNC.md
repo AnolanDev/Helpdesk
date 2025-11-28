@@ -258,7 +258,7 @@ echo $user->full_name; // "Gustavo Olivera"
 </select>
 ```
 
-## Casos de Uso para Helpdesk
+## Casos de Uso para HelpTech
 
 ### 1. Asignar Ticket a Usuario
 

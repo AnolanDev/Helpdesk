@@ -525,6 +525,6 @@ class Ticket extends Model
             default => config('tickets.sla.default', 72),
         };
 
-        return now()->addHours($slaHours);
+        return now()->addHours((int) $slaHours);
     }
 }

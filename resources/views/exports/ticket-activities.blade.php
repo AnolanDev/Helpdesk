@@ -255,7 +255,7 @@
 
     <!-- Footer -->
     <div class="footer">
-        <p>Este documento fue generado automáticamente por el sistema de Helpdesk.</p>
+        <p>Este documento fue generado automáticamente por el sistema de HelpTech.</p>
         <p>Total de actividades: {{ $activities->count() }}</p>
     </div>
 </body>
