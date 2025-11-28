@@ -8,6 +8,7 @@ use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
 use Illuminate\Support\Str;
+use App\Models\Setting;
 
 class Ticket extends Model
 {
@@ -520,15 +521,16 @@ class Ticket extends Model
 
     /**
      * Calcular fecha de vencimiento basada en SLA por prioridad
+     * Usa configuración dinámica desde la base de datos
      */
     public static function calculateDueDate(string $priority): ?\Carbon\Carbon
     {
         $slaHours = match ($priority) {
-            static::PRIORITY_URGENT => config('tickets.sla.urgent', 4),
-            static::PRIORITY_HIGH => config('tickets.sla.high', 24),
-            static::PRIORITY_NORMAL => config('tickets.sla.normal', 72),
-            static::PRIORITY_LOW => config('tickets.sla.low', 168),
-            default => config('tickets.sla.default', 72),
+            static::PRIORITY_URGENT => Setting::get('sla_urgent_hours', 4),
+            static::PRIORITY_HIGH => Setting::get('sla_high_hours', 24),
+            static::PRIORITY_NORMAL => Setting::get('sla_normal_hours', 72),
+            static::PRIORITY_LOW => Setting::get('sla_low_hours', 168),
+            default => Setting::get('sla_normal_hours', 72),
         };
 
         return now()->addHours((int) $slaHours);
