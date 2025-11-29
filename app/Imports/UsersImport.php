@@ -57,13 +57,11 @@ class UsersImport implements ToCollection, WithHeadingRow, WithBatchInserts, Wit
                     'name' => $row['nombre'] ?? $row['name'],
                     'email' => strtolower(trim($row['email'] ?? $row['correo'])),
                     'password' => Hash::make($row['password'] ?? $row['contrasena'] ?? 'password123'),
-                    'tipo_usuario' => $this->mapUserType($row['tipo'] ?? $row['tipo_usuario'] ?? 'user'),
+                    'tipo_usuario' => $this->mapUserType($row['tipo'] ?? $row['tipo_usuario'] ?? 'usuario_final'),
                     'empresa' => $row['empresa'] ?? null,
                     'sucursal' => $row['sucursal'] ?? null,
-                    'departamento' => $row['departamento'] ?? null,
-                    'cargo' => $row['cargo'] ?? null,
-                    'telefono' => $row['telefono'] ?? null,
-                    'activo' => $this->parseBoolean($row['activo'] ?? 'si'),
+                    'phone' => $row['telefono'] ?? $row['phone'] ?? null,
+                    'is_active' => $this->parseBoolean($row['activo'] ?? $row['is_active'] ?? 'si'),
                     'email_verified_at' => now(),
                 ];
 
@@ -130,7 +128,7 @@ class UsersImport implements ToCollection, WithHeadingRow, WithBatchInserts, Wit
     protected function mapUserType(?string $type): string
     {
         if (!$type) {
-            return 'user';
+            return 'usuario_final';
         }
 
         $type = strtolower(trim($type));
@@ -142,12 +140,13 @@ class UsersImport implements ToCollection, WithHeadingRow, WithBatchInserts, Wit
             'tecnico' => 'tech',
             'técnico' => 'tech',
             'soporte' => 'tech',
-            'user' => 'user',
-            'usuario' => 'user',
-            'final' => 'user',
+            'user' => 'usuario_final',
+            'usuario' => 'usuario_final',
+            'usuario_final' => 'usuario_final',
+            'final' => 'usuario_final',
         ];
 
-        return $mapping[$type] ?? 'user';
+        return $mapping[$type] ?? 'usuario_final';
     }
 
     /**
