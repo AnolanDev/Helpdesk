@@ -173,36 +173,145 @@
 - Migrations: `database/migrations/*users*`
 
 **Funcionalidades:**
-- [ ] Listar usuarios
-- [ ] Crear usuario nuevo
-- [ ] Editar usuario existente
-- [ ] Eliminar usuario (soft delete)
-- [ ] Activar/desactivar usuario
-- [ ] Filtrar por tipo de usuario (admin, tech, user)
-- [ ] Filtrar por empresa/sucursal
-- [ ] Búsqueda por nombre/email
-- [ ] Asignación de roles (admin, tech, usuario final)
+- [x] Listar usuarios
+- [x] Crear usuario nuevo
+- [x] Editar usuario existente
+- [x] Eliminar usuario (soft delete)
+- [x] Activar/desactivar usuario
+- [x] Filtrar por tipo de usuario (admin, tech, usuario_final)
+- [x] Filtrar por empresa/sucursal
+- [x] Búsqueda por nombre/email
+- [x] Asignación de roles (admin, tech, usuario final)
+- [x] Restaurar usuarios eliminados (restore)
+- [x] Eliminación permanente (force delete)
 
 **Tipos de usuario:**
 - `admin`: Administrador (acceso total)
 - `tech`: Técnico de soporte
-- `user`: Usuario final
+- `usuario_final`: Usuario final
 
 **Campos del usuario:**
 - Nombre, email, contraseña
 - Tipo de usuario
 - Empresa, sucursal
-- Departamento, cargo
-- Teléfono
-- Estado activo/inactivo
+- Teléfono (phone)
+- Estado activo/inactivo (is_active)
 
-**Pruebas a realizar:**
-1. Crear usuarios de cada tipo (admin, tech, user)
-2. Editar información de usuario
-3. Desactivar/activar usuario
-4. Verificar permisos según tipo
-5. Eliminar usuario
-6. Buscar y filtrar usuarios
+**🧪 RESULTADOS DE PRUEBAS (29/11/2025):**
+
+**TEST 1: Verificar usuarios existentes**
+- Total usuarios: 19 (17 iniciales + 3 creados en tests - 1 eliminado permanentemente)
+- Usuarios activos: 19
+- Usuarios inactivos: 0
+- Usuarios eliminados (soft delete): 1
+- Distribución por tipo:
+  - admin: 6 usuarios
+  - tech: 7 usuarios
+  - usuario_final: 6 usuarios
+- Distribución por empresa:
+  - Asercol: 9 usuarios
+  - Sotracar: 3 usuarios
+  - Test Company: 2 usuarios
+  - Ci Global/Nueva Empresa: 2 usuarios
+
+**TEST 2: Crear usuario nuevo**
+- Resultado: ✅ EXITOSO
+- Usuarios creados: 3 (usuario_final, tech, admin)
+- Campos verificados:
+  - name ✓
+  - email ✓
+  - tipo_usuario ✓
+  - empresa ✓
+  - sucursal ✓
+  - phone ✓
+  - is_active ✓
+- Métodos helper funcionando:
+  - isAdmin() ✓
+  - isTech() ✓
+  - isUsuarioFinal() ✓
+  - getTipoUsuarioLabelAttribute ✓
+
+**TEST 3: Editar usuario existente**
+- Resultado: ✅ EXITOSO
+- Actualización de información básica (nombre, sucursal, teléfono) ✓
+- Cambio de tipo de usuario (usuario_final → tech) ✓
+- Cambio de empresa ✓
+- Todos los campos actualizables correctamente
+
+**TEST 4: Activar/Desactivar usuarios**
+- Resultado: ✅ EXITOSO
+- Desactivación funciona (is_active = false) ✓
+- Scope active() filtra correctamente ✓
+- Reactivación funciona (is_active = true) ✓
+- Usuario desactivado no aparece en consultas con scope ✓
+
+**TEST 5: Eliminar usuario (soft delete)**
+- Resultado: ✅ EXITOSO
+- Soft delete funciona correctamente ✓
+- Usuario eliminado no aparece en consultas normales ✓
+- Usuario recuperable con withTrashed() ✓
+- Restauración funciona perfectamente (restore) ✓
+- Force delete elimina permanentemente ✓
+- deleted_at se registra correctamente
+
+**TEST 6: Filtros por tipo de usuario**
+- Resultado: ✅ EXITOSO
+- Scope usuariosFinales(): 6 usuarios ✓
+- Scope techs(): 7 usuarios ✓
+- Scope admins(): 6 usuarios ✓
+- Filtro WHERE manual funciona ✓
+- Métodos helper verificados en cada tipo ✓
+
+**TEST 7: Filtros por empresa/sucursal y búsqueda**
+- Resultado: ✅ EXITOSO
+- Filtro por empresa funciona ✓
+  - Asercol: 9 usuarios
+  - Sotracar: 3 usuarios
+  - Test Company: 2 usuarios
+- Filtro por sucursal funciona ✓
+  - Cartagena: 10 usuarios
+  - Bogota: 4 usuarios
+  - Medellín: 2 usuarios
+- Filtro combinado (empresa + sucursal) ✓
+- Búsqueda LIKE por nombre ✓
+- Búsqueda LIKE por email ✓
+- Búsqueda combinada (nombre OR email) ✓
+
+**TEST 8: Permisos de acceso al módulo**
+- Resultado: ✅ VERIFICADO
+- Administrador:
+  - Ve TODOS los usuarios (19) ✓
+  - Acceso completo CRUD ✓
+- Técnico:
+  - Ve usuarios de su empresa (9 usuarios Asercol) ✓
+  - Acceso limitado (solo lectura según policies) ✓
+- Usuario Final:
+  - Sin acceso al módulo ✓
+
+**Scopes Verificados:**
+- [x] active() - Solo usuarios activos
+- [x] usuariosFinales() - Solo usuarios finales
+- [x] techs() - Solo técnicos
+- [x] admins() - Solo administradores
+- [x] onlyTrashed() - Solo eliminados
+- [x] withTrashed() - Incluye eliminados
+
+**Métodos Helper Verificados:**
+- [x] isAdmin() - Verifica si es administrador
+- [x] isTech() - Verifica si es técnico
+- [x] isUsuarioFinal() - Verifica si es usuario final
+- [x] getTipoUsuarioLabelAttribute - Etiqueta del tipo
+
+**Funcionalidades Probadas:**
+- ✅ CRUD completo (Create, Read, Update, Delete)
+- ✅ Soft Delete con restore
+- ✅ Force Delete (eliminación permanente)
+- ✅ Activar/Desactivar usuarios
+- ✅ Filtros por tipo, empresa, sucursal
+- ✅ Búsqueda por nombre/email
+- ✅ Scopes de Eloquent
+- ✅ Métodos helper de tipo de usuario
+- ✅ Permisos por rol
 
 ---
 
@@ -478,10 +587,12 @@
 - [ ] Exportación de datos (no probado)
 
 ### Fase 3: Módulo de Usuarios
-- [ ] CRUD de usuarios
-- [ ] Permisos y roles
-- [ ] Filtros y búsquedas
-- [ ] Activación/desactivación
+- [x] CRUD de usuarios (crear, leer, actualizar, eliminar)
+- [x] Permisos y roles (admin, tech, usuario_final)
+- [x] Filtros y búsquedas (tipo, empresa, sucursal, nombre, email)
+- [x] Activación/desactivación (is_active funcionando)
+- [x] Soft delete y restore (withTrashed, restore, forceDelete)
+- [x] Scopes de Eloquent (active, admins, techs, usuariosFinales)
 
 ### Fase 4: Importación Masiva
 - [x] Descarga de plantilla (estructura verificada)
@@ -548,6 +659,19 @@
 - ✅ Numeración por empresa y fecha (ASE-20251129-0001)
 - ⚠️ Reasignación no actualiza assigned_at
 
+**4. Gestión de Usuarios (29/11/2025)**
+- ✅ CRUD completo (Create, Read, Update, Delete) funcionando
+- ✅ Soft Delete con restauración exitosa
+- ✅ Force Delete (eliminación permanente)
+- ✅ Activación/Desactivación de usuarios
+- ✅ Filtros por tipo de usuario (scopes funcionando)
+- ✅ Filtros por empresa y sucursal
+- ✅ Búsqueda por nombre y email (LIKE)
+- ✅ Búsqueda combinada (nombre OR email)
+- ✅ Permisos por rol verificados
+- ✅ 6 scopes de Eloquent operativos
+- ✅ 4 métodos helper de tipo funcionando
+
 ### ⚠️ Problemas Encontrados
 
 **1. TestDataSeeder - Columnas inexistentes (RESUELTO)**
@@ -592,10 +716,10 @@
 
 ## 📊 Estado de la Revisión
 
-**Progreso general:** 37% (3/8 módulos probados)
+**Progreso general:** 50% (4/8 módulos probados)
 
 - [x] Sistema de Tickets - 90% ✅ (Backend completamente probado, faltan 3 funcionalidades menores)
-- [ ] Gestión de Usuarios - 0%
+- [x] Gestión de Usuarios - 100% ✅ (Backend completamente probado, 8 tests exitosos)
 - [x] Importación Masiva - 100% ✅ (Backend completamente probado)
 - [ ] Configuración - 0%
 - [ ] Notificaciones - 0%
@@ -603,11 +727,12 @@
 - [ ] Perfil - 0%
 - [ ] Autenticación - 0%
 
-**Última actualización:** 29/11/2025 10:10
+**Última actualización:** 29/11/2025 10:45
 **Módulos completados:**
   - Importación Masiva de Usuarios (100%)
   - Sistema de Tickets (90%)
-**Próximo módulo:** Gestión de Usuarios o Dashboard
+  - Gestión de Usuarios (100%)
+**Próximo módulo:** Dashboard, Notificaciones, Configuración o Autenticación
 
 ---
 
