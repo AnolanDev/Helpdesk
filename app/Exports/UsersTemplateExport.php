@@ -22,11 +22,9 @@ class UsersTemplateExport implements FromArray, WithHeadings, WithStyles, WithCo
                 'Juan Pérez',
                 'juan.perez@ejemplo.com',
                 'password123',
-                'user',
+                'usuario_final',
                 'Asercol',
                 'Cartagena',
-                'TI',
-                'Analista',
                 '+57 300 1234567',
                 'si',
             ],
@@ -37,8 +35,6 @@ class UsersTemplateExport implements FromArray, WithHeadings, WithStyles, WithCo
                 'tech',
                 'Sotracar',
                 'Bogota',
-                'Soporte',
-                'Técnico',
                 '+57 310 9876543',
                 'si',
             ],
@@ -49,8 +45,6 @@ class UsersTemplateExport implements FromArray, WithHeadings, WithStyles, WithCo
                 'admin',
                 'Ci Global Services',
                 'Cartagena',
-                'Administración',
-                'Administrador',
                 '+57 320 5551234',
                 'si',
             ],
@@ -66,11 +60,9 @@ class UsersTemplateExport implements FromArray, WithHeadings, WithStyles, WithCo
             'Nombre',
             'Email',
             'Contraseña',
-            'Tipo (user/tech/admin)',
+            'Tipo (usuario_final/tech/admin)',
             'Empresa',
             'Sucursal',
-            'Departamento',
-            'Cargo',
             'Teléfono',
             'Activo (si/no)',
         ];
@@ -104,13 +96,11 @@ class UsersTemplateExport implements FromArray, WithHeadings, WithStyles, WithCo
             'A' => 25, // Nombre
             'B' => 30, // Email
             'C' => 15, // Contraseña
-            'D' => 25, // Tipo
+            'D' => 30, // Tipo
             'E' => 25, // Empresa
             'F' => 20, // Sucursal
-            'G' => 20, // Departamento
-            'H' => 20, // Cargo
-            'I' => 18, // Teléfono
-            'J' => 15, // Activo
+            'G' => 18, // Teléfono
+            'H' => 15, // Activo
         ];
     }
 }
