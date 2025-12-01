@@ -32,59 +32,141 @@
       </div>
 
       <!-- Stats Grid -->
-      <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-        <div class="rounded-lg border border-secondary-200 bg-white p-4">
+      <div class="grid gap-3 grid-cols-2 sm:grid-cols-3 lg:grid-cols-5">
+        <!-- Pendiente -->
+        <div class="rounded-lg border border-gray-200 bg-white p-3">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-secondary-600">Por Hacer</p>
-              <p class="mt-2 text-3xl font-bold text-secondary-900">{{ stats.todo }}</p>
+              <p class="text-xs font-medium text-secondary-600">Pendiente</p>
+              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.todo }}</p>
             </div>
-            <div class="rounded-full bg-gray-100 p-3">
-              <svg class="h-6 w-6 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="rounded-full bg-gray-100 p-2">
+              <svg class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="rounded-lg border border-secondary-200 bg-white p-4">
+        <!-- Programada -->
+        <div class="rounded-lg border border-purple-200 bg-white p-3">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-secondary-600">En Progreso</p>
-              <p class="mt-2 text-3xl font-bold text-secondary-900">{{ stats.in_progress }}</p>
+              <p class="text-xs font-medium text-secondary-600">Programada</p>
+              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.scheduled }}</p>
             </div>
-            <div class="rounded-full bg-blue-100 p-3">
-              <svg class="h-6 w-6 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="rounded-full bg-purple-100 p-2">
+              <svg class="h-4 w-4 text-purple-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        <!-- En Progreso -->
+        <div class="rounded-lg border border-blue-200 bg-white p-3">
+          <div class="flex items-center justify-between">
+            <div>
+              <p class="text-xs font-medium text-secondary-600">En Progreso</p>
+              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.in_progress }}</p>
+            </div>
+            <div class="rounded-full bg-blue-100 p-2">
+              <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="rounded-lg border border-secondary-200 bg-white p-4">
+        <!-- Bloqueada -->
+        <div class="rounded-lg border border-orange-200 bg-white p-3">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-secondary-600">En Revisión</p>
-              <p class="mt-2 text-3xl font-bold text-secondary-900">{{ stats.in_review }}</p>
+              <p class="text-xs font-medium text-secondary-600">Bloqueada</p>
+              <p class="mt-1 text-2xl font-bold text-orange-600">{{ stats.blocked }}</p>
             </div>
-            <div class="rounded-full bg-yellow-100 p-3">
-              <svg class="h-6 w-6 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+            <div class="rounded-full bg-orange-100 p-2">
+              <svg class="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
               </svg>
             </div>
           </div>
         </div>
 
-        <div class="rounded-lg border border-secondary-200 bg-white p-4">
+        <!-- En Revisión -->
+        <div class="rounded-lg border border-yellow-200 bg-white p-3">
           <div class="flex items-center justify-between">
             <div>
-              <p class="text-sm font-medium text-secondary-600">Vencidas</p>
-              <p class="mt-2 text-3xl font-bold text-red-600">{{ stats.overdue }}</p>
+              <p class="text-xs font-medium text-secondary-600">En Revisión</p>
+              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.in_review }}</p>
             </div>
-            <div class="rounded-full bg-red-100 p-3">
-              <svg class="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <div class="rounded-full bg-yellow-100 p-2">
+              <svg class="h-4 w-4 text-yellow-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z" /><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <!-- Secondary Stats -->
+      <div class="grid gap-3 grid-cols-2 sm:grid-cols-4">
+        <!-- Completada -->
+        <div class="rounded-lg border border-green-200 bg-white p-3">
+          <div class="flex items-center gap-2">
+            <div class="rounded-full bg-green-100 p-2">
+              <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-secondary-600">Completada</p>
+              <p class="text-xl font-bold text-secondary-900">{{ stats.done }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Cancelada -->
+        <div class="rounded-lg border border-red-200 bg-white p-3">
+          <div class="flex items-center gap-2">
+            <div class="rounded-full bg-red-100 p-2">
+              <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-secondary-600">Cancelada</p>
+              <p class="text-xl font-bold text-secondary-900">{{ stats.cancelled }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Archivada -->
+        <div class="rounded-lg border border-slate-200 bg-white p-3">
+          <div class="flex items-center gap-2">
+            <div class="rounded-full bg-slate-100 p-2">
+              <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
+              </svg>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-secondary-600">Archivada</p>
+              <p class="text-xl font-bold text-secondary-900">{{ stats.archived }}</p>
+            </div>
+          </div>
+        </div>
+
+        <!-- Vencidas -->
+        <div class="rounded-lg border border-red-200 bg-red-50 p-3">
+          <div class="flex items-center gap-2">
+            <div class="rounded-full bg-red-100 p-2">
+              <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
               </svg>
+            </div>
+            <div>
+              <p class="text-xs font-medium text-red-600">Vencidas</p>
+              <p class="text-xl font-bold text-red-600">{{ stats.overdue }}</p>
             </div>
           </div>
         </div>
