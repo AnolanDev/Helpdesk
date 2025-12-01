@@ -436,8 +436,11 @@ class TaskController extends Controller
             'status' => 'required|in:' . implode(',', array_keys(Task::getStatuses())),
         ]);
 
-        $oldStatus = $task->status;
-        $newStatus = $validated['status'];
+        $oldStatusValue = is_string($task->status) ? $task->status : $task->status->value;
+        $newStatusValue = $validated['status'];
+
+        // Guardar el label del estado anterior antes de actualizar
+        $oldStatusLabel = $task->status_label;
 
         try {
             $task->update([
@@ -446,9 +449,10 @@ class TaskController extends Controller
             ]);
 
             // Si el estado cambió, agregar comentario automático
-            if ($oldStatus !== $newStatus) {
-                $oldStatusLabel = Task::getStatuses()[$oldStatus];
-                $newStatusLabel = Task::getStatuses()[$newStatus];
+            if ($oldStatusValue !== $newStatusValue) {
+                // Refrescar el modelo para obtener el nuevo label
+                $task->refresh();
+                $newStatusLabel = $task->status_label;
 
                 $task->addComment(
                     "Estado cambiado de '{$oldStatusLabel}' a '{$newStatusLabel}' (tablero Kanban)",
