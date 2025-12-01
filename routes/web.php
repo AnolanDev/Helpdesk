@@ -3,6 +3,7 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\TaskController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserImportController;
 use App\Http\Controllers\NotificationController;
@@ -40,6 +41,16 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tickets/{ticket}/close', [TicketController::class, 'close'])->name('tickets.close');
     Route::patch('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
     Route::get('/tickets/{ticket}/export-activities', [TicketController::class, 'exportActivities'])->name('tickets.export-activities');
+
+    // Tasks Routes
+    Route::get('/tasks/board', [TaskController::class, 'board'])->name('tasks.board');
+    Route::resource('tasks', TaskController::class);
+
+    // Task Actions
+    Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
+    Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
+    Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment'])->name('tasks.comments');
+    Route::patch('/tasks/{task}/position', [TaskController::class, 'updatePosition'])->name('tasks.position');
 
     // Users Routes
     Route::resource('users', UserController::class);

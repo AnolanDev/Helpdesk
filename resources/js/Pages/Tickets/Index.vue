@@ -39,7 +39,7 @@
       <!-- Stats Grid (Clickeable para filtrar) -->
       <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <button
-          @click="filterByStatus('abierto')"
+          @click="filterByStatus(null)"
           class="text-left transition-all hover:scale-105 focus:outline-none focus:ring-2 focus:ring-primary-500 focus:ring-offset-2 rounded-lg"
         >
           <Card variant="elevated" hoverable>
@@ -710,7 +710,18 @@ const debouncedSearch = () => {
 
 // Filtro rápido desde cards
 const filterByStatus = (status) => {
-  form.status = form.status === status ? '' : status;
+  // Limpiar filtros que puedan interferir
+  form.show_overdue = false;
+
+  // Si es null, limpiar el filtro de estado (para mostrar todos los abiertos)
+  if (status === null) {
+    form.status = '';
+    form.show_closed = false; // Asegurar que no muestra cerrados
+  } else {
+    // Filtrar por estado específico
+    form.status = status;
+    form.show_closed = false; // Asegurar que no muestra cerrados
+  }
   applyFilters();
 };
 
@@ -721,6 +732,7 @@ const filterOverdue = () => {
   form.priority = '';
   form.category = '';
   form.assigned_to = '';
+  form.show_closed = false;
   form.show_overdue = true;
   applyFilters();
 };
@@ -740,6 +752,7 @@ const applyFilters = () => {
   router.get(route('tickets.index'), form, {
     preserveState: true,
     preserveScroll: true,
+    only: ['tickets', 'filters', 'stats'],
   });
 };
 

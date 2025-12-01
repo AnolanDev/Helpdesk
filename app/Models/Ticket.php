@@ -204,12 +204,14 @@ class Ticket extends Model
 
     public function scopeOverdue($query)
     {
-        return $query->where('is_overdue', true)
-            ->orWhere(function ($q) {
-                $q->whereNotNull('due_date')
-                    ->where('due_date', '<', now())
-                    ->whereNotIn('status', [static::STATUS_CLOSED, static::STATUS_CANCELLED]);
-            });
+        return $query->where(function ($q) {
+            $q->where('is_overdue', true)
+                ->whereNotIn('status', [static::STATUS_RESOLVED, static::STATUS_CLOSED, static::STATUS_CANCELLED]);
+        })->orWhere(function ($q) {
+            $q->whereNotNull('due_date')
+                ->where('due_date', '<', now())
+                ->whereNotIn('status', [static::STATUS_RESOLVED, static::STATUS_CLOSED, static::STATUS_CANCELLED]);
+        });
     }
 
     public function scopeAssignedTo($query, $userId)
@@ -248,8 +250,9 @@ class Ticket extends Model
         // Formato: ASE-20251128-0001 (incluye fecha para unicidad)
         $fecha = date('Ymd'); // YYYYMMDD
 
-        // Obtener todos los tickets del día con el mismo prefijo
+        // Obtener todos los tickets del día con el mismo prefijo (excluyendo eliminados)
         $tickets = static::where('ticket_number', 'like', $iniciales . '-' . $fecha . '-%')
+            ->withTrashed()
             ->pluck('ticket_number');
 
         $maxConsecutivo = 0;
@@ -308,7 +311,7 @@ class Ticket extends Model
             return false;
         }
 
-        return $this->due_date < now() && !$this->isClosed();
+        return $this->due_date < now() && !$this->isClosed() && !$this->isResolved();
     }
 
     public function canBeAssigned(): bool

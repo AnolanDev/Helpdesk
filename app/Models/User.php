@@ -126,6 +126,30 @@ class User extends Authenticatable
     }
 
     /**
+     * Tareas creadas por el usuario
+     */
+    public function createdTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'created_by');
+    }
+
+    /**
+     * Tareas asignadas al usuario
+     */
+    public function assignedTasks(): HasMany
+    {
+        return $this->hasMany(Task::class, 'assigned_to');
+    }
+
+    /**
+     * Comentarios de tareas creados por el usuario
+     */
+    public function taskComments(): HasMany
+    {
+        return $this->hasMany(TaskComment::class, 'user_id');
+    }
+
+    /**
      * ==============================================
      * SCOPES
      * ==============================================

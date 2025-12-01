@@ -65,19 +65,26 @@ class TicketController extends Controller
         }
 
         // Filtro de tickets vencidos
-        if ($request->filled('show_overdue') && $request->show_overdue) {
+        // IMPORTANTE: Convertir string "false"/"true" a boolean real
+        $showOverdue = $request->boolean('show_overdue');
+        if ($showOverdue) {
             $query->overdue();
         }
 
         // Filtro de tickets abiertos/cerrados
-        if ($request->filled('show_closed')) {
-            if (!$request->show_closed) {
-                $query->open();
-            }
-        } else {
-            // Por defecto, mostrar solo tickets abiertos (a menos que se esté filtrando por vencidos)
-            if (!$request->filled('show_overdue') || !$request->show_overdue) {
-                $query->open();
+        // Solo aplicar el filtro open() si NO se está filtrando por un estado específico
+        // IMPORTANTE: Convertir string "false"/"true" a boolean real
+        $showClosed = $request->boolean('show_closed');
+        if (!$request->filled('status')) {
+            if ($request->filled('show_closed')) {
+                if (!$showClosed) {
+                    $query->open();
+                }
+            } else {
+                // Por defecto, mostrar solo tickets abiertos (a menos que se esté filtrando por vencidos)
+                if (!$showOverdue) {
+                    $query->open();
+                }
             }
         }
 

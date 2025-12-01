@@ -1,10 +1,10 @@
 <template>
-  <header class="sticky top-0 z-50 bg-white border-b border-gray-200 h-16 flex items-center justify-between px-6">
+  <header class="sticky top-0 z-50 h-16 flex items-center justify-between px-6 bg-white border-b border-secondary-200 shadow-sm backdrop-blur-sm bg-white/95">
     <!-- Logo - Extremo izquierdo -->
     <div class="flex items-center">
       <button
         @click="$emit('toggle-sidebar')"
-        class="flex items-center justify-center p-2 text-gray-700 hover:bg-gray-100 rounded-lg lg:hidden mr-2"
+        class="flex items-center justify-center p-2 text-secondary-600 hover:bg-secondary-100 rounded-lg lg:hidden mr-2 transition-all duration-200 active:scale-95"
         aria-label="Toggle menu"
       >
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -12,30 +12,23 @@
         </svg>
       </button>
 
-      <Link :href="route('dashboard')" class="flex items-center">
-        <img src="/images/logo.svg" alt="HelpTech" class="h-8 w-auto" />
-        <span class="ml-2 text-xl font-semibold text-gray-900">HelpTech</span>
+      <Link :href="route('dashboard')" class="flex items-center group">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 shadow-md shadow-primary-600/30">
+          <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
+          </svg>
+        </div>
+        <span class="ml-3 text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">HelpTech</span>
       </Link>
     </div>
 
     <!-- Usuario - Extremo derecho -->
     <div class="flex items-center gap-4">
-        <!-- Botón Nuevo Ticket -->
-        <Link
-          :href="route('tickets.create')"
-          class="hidden md:flex items-center gap-2 bg-primary-600 text-white px-4 py-2 rounded-lg font-medium text-sm hover:bg-primary-700 transition-colors"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4" />
-          </svg>
-          Nuevo Ticket
-        </Link>
-
         <!-- Notificaciones -->
         <div class="relative" ref="notificationDropdown">
           <button
             @click="toggleNotifications"
-            class="relative flex items-center justify-center h-10 w-10 rounded-lg border border-gray-300 bg-white text-gray-700 hover:bg-gray-50 transition-colors"
+            class="relative flex items-center justify-center h-10 w-10 rounded-lg border border-secondary-200 bg-white text-secondary-600 hover:bg-secondary-50 hover:border-secondary-300 transition-all duration-200 active:scale-95"
             title="Notificaciones"
           >
             <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -60,7 +53,7 @@
             >
               <div
                 v-if="isNotificationsOpen"
-                class="absolute right-0 mt-2 w-80 sm:w-96 origin-top-right rounded-lg border border-secondary-200 bg-white shadow-xl ring-1 ring-black ring-opacity-5 focus:outline-none"
+                class="absolute right-0 mt-2 w-80 sm:w-96 origin-top-right rounded-xl border border-secondary-200 bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
               >
                 <!-- Header -->
                 <div class="flex items-center justify-between border-b border-secondary-200 px-4 py-3">
@@ -132,19 +125,19 @@
         <div class="relative" ref="dropdown">
           <button
             @click="toggleDropdown"
-            class="flex items-center gap-2"
+            class="flex items-center gap-2 rounded-lg px-2 py-1.5 transition-all duration-200 hover:bg-secondary-50 active:scale-95"
           >
-            <div class="hidden sm:flex items-center gap-2">
+            <div class="hidden sm:flex items-center gap-3">
               <div class="text-right">
-                <div class="text-sm font-medium text-gray-900">{{ user?.name || 'Usuario' }}</div>
-                <div class="text-xs text-gray-500">{{ userTypeLabel }}</div>
+                <div class="text-sm font-medium text-secondary-900">{{ user?.name || 'Usuario' }}</div>
+                <div class="text-xs text-secondary-500">{{ userTypeLabel }}</div>
               </div>
-              <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-semibold text-sm">
+              <div class="h-10 w-10 rounded-full bg-gradient-to-br from-primary-500 to-primary-600 flex items-center justify-center text-white font-semibold text-sm shadow-md shadow-primary-600/30 ring-2 ring-white">
                 {{ initials }}
               </div>
             </div>
             <svg
-              class="h-4 w-4 text-gray-600 transition-transform duration-200"
+              class="h-4 w-4 text-secondary-600 transition-transform duration-200"
               :class="{ 'rotate-180': isDropdownOpen }"
               fill="none"
               viewBox="0 0 24 24"
@@ -165,7 +158,7 @@
             >
               <div
                 v-if="isDropdownOpen"
-                class="absolute right-0 mt-2 w-56 origin-top-right rounded-lg border border-secondary-200 bg-white shadow-lg ring-1 ring-black ring-opacity-5 focus:outline-none"
+                class="absolute right-0 mt-2 w-56 origin-top-right rounded-xl border border-secondary-200 bg-white shadow-2xl ring-1 ring-black ring-opacity-5 focus:outline-none overflow-hidden"
               >
                 <div class="py-1">
                   <!-- User Info (Mobile) -->

@@ -1,5 +1,8 @@
 <template>
-  <div class="min-h-screen bg-secondary-50">
+  <div class="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-secondary-50/30">
+    <!-- Loading Indicator -->
+    <LoadingIndicator />
+
     <!-- Header -->
     <Header @toggle-sidebar="sidebarOpen = !sidebarOpen" />
 
@@ -25,6 +28,7 @@ import { ref } from 'vue';
 import Header from './Header.vue';
 import Sidebar from './Sidebar.vue';
 import FlashMessages from '@/Components/FlashMessages.vue';
+import LoadingIndicator from '@/Components/LoadingIndicator.vue';
 
 const sidebarOpen = ref(false);
 </script>
