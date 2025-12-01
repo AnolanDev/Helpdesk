@@ -115,11 +115,10 @@ class TaskController extends Controller
             'priorities' => Task::getPriorities(),
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
             'stats' => [
+                'received' => (clone $statsQuery)->received()->count(),
                 'todo' => (clone $statsQuery)->todo()->count(),
-                'scheduled' => (clone $statsQuery)->scheduled()->count(),
                 'in_progress' => (clone $statsQuery)->inProgress()->count(),
                 'blocked' => (clone $statsQuery)->blocked()->count(),
-                'in_review' => (clone $statsQuery)->inReview()->count(),
                 'done' => (clone $statsQuery)->done()->count(),
                 'cancelled' => (clone $statsQuery)->cancelled()->count(),
                 'archived' => (clone $statsQuery)->archived()->count(),
@@ -161,11 +160,10 @@ class TaskController extends Controller
 
         return Inertia::render('Tasks/Board', [
             'tasks' => [
+                'received' => $tasks->get(TaskStatus::RECEIVED->value, collect())->values(),
                 'todo' => $tasks->get(TaskStatus::TODO->value, collect())->values(),
-                'scheduled' => $tasks->get(TaskStatus::SCHEDULED->value, collect())->values(),
                 'in_progress' => $tasks->get(TaskStatus::IN_PROGRESS->value, collect())->values(),
                 'blocked' => $tasks->get(TaskStatus::BLOCKED->value, collect())->values(),
-                'review' => $tasks->get(TaskStatus::REVIEW->value, collect())->values(),
             ],
             'filters' => $request->only(['assigned_to', 'priority']),
             'statuses' => Task::getStatuses(),
@@ -206,7 +204,7 @@ class TaskController extends Controller
         $task = Task::create([
             ...$validated,
             'created_by' => auth()->id(),
-            'status' => Task::STATUS_TODO,
+            'status' => Task::STATUS_RECEIVED,
         ]);
 
         // Si se asigna directamente

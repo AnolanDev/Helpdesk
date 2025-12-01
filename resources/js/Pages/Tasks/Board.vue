@@ -66,12 +66,40 @@
       </div>
 
       <!-- Kanban Board -->
-      <div class="grid gap-4 xl:grid-cols-5 lg:grid-cols-3 md:grid-cols-2">
-        <!-- Pendiente Column -->
+      <div class="grid gap-4 xl:grid-cols-4 lg:grid-cols-2 md:grid-cols-2">
+        <!-- Recibida Column -->
+        <div class="flex flex-col rounded-lg border border-indigo-200 bg-indigo-50">
+          <div class="border-b border-indigo-200 bg-white px-4 py-3">
+            <div class="flex items-center justify-between">
+              <h3 class="font-semibold text-secondary-900">Recibida</h3>
+              <span class="rounded-full bg-indigo-100 px-2 py-1 text-xs font-semibold text-indigo-800">
+                {{ tasksData.received.length }}
+              </span>
+            </div>
+          </div>
+          <div
+            class="flex-1 space-y-3 p-4 min-h-[500px]"
+            @drop="handleDrop($event, 'received')"
+            @dragover.prevent
+            @dragenter.prevent
+          >
+            <TaskCard
+              v-for="task in tasksData.received"
+              :key="task.id"
+              :task="task"
+              @dragstart="handleDragStart($event, task)"
+            />
+            <div v-if="tasksData.received.length === 0" class="text-center py-8 text-sm text-secondary-500">
+              No hay tareas
+            </div>
+          </div>
+        </div>
+
+        <!-- Por Hacer Column -->
         <div class="flex flex-col rounded-lg border border-secondary-200 bg-secondary-50">
           <div class="border-b border-secondary-200 bg-white px-4 py-3">
             <div class="flex items-center justify-between">
-              <h3 class="font-semibold text-secondary-900">Pendiente</h3>
+              <h3 class="font-semibold text-secondary-900">Por Hacer</h3>
               <span class="rounded-full bg-gray-100 px-2 py-1 text-xs font-semibold text-gray-800">
                 {{ tasksData.todo.length }}
               </span>
@@ -90,34 +118,6 @@
               @dragstart="handleDragStart($event, task)"
             />
             <div v-if="tasksData.todo.length === 0" class="text-center py-8 text-sm text-secondary-500">
-              No hay tareas
-            </div>
-          </div>
-        </div>
-
-        <!-- Programada Column -->
-        <div class="flex flex-col rounded-lg border border-purple-200 bg-purple-50">
-          <div class="border-b border-purple-200 bg-white px-4 py-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-semibold text-secondary-900">Programada</h3>
-              <span class="rounded-full bg-purple-100 px-2 py-1 text-xs font-semibold text-purple-800">
-                {{ tasksData.scheduled.length }}
-              </span>
-            </div>
-          </div>
-          <div
-            class="flex-1 space-y-3 p-4 min-h-[500px]"
-            @drop="handleDrop($event, 'scheduled')"
-            @dragover.prevent
-            @dragenter.prevent
-          >
-            <TaskCard
-              v-for="task in tasksData.scheduled"
-              :key="task.id"
-              :task="task"
-              @dragstart="handleDragStart($event, task)"
-            />
-            <div v-if="tasksData.scheduled.length === 0" class="text-center py-8 text-sm text-secondary-500">
               No hay tareas
             </div>
           </div>
@@ -178,34 +178,6 @@
             </div>
           </div>
         </div>
-
-        <!-- En Revisión Column -->
-        <div class="flex flex-col rounded-lg border border-yellow-200 bg-yellow-50">
-          <div class="border-b border-yellow-200 bg-white px-4 py-3">
-            <div class="flex items-center justify-between">
-              <h3 class="font-semibold text-secondary-900">En Revisión</h3>
-              <span class="rounded-full bg-yellow-100 px-2 py-1 text-xs font-semibold text-yellow-800">
-                {{ tasksData.review.length }}
-              </span>
-            </div>
-          </div>
-          <div
-            class="flex-1 space-y-3 p-4 min-h-[500px]"
-            @drop="handleDrop($event, 'review')"
-            @dragover.prevent
-            @dragenter.prevent
-          >
-            <TaskCard
-              v-for="task in tasksData.review"
-              :key="task.id"
-              :task="task"
-              @dragstart="handleDragStart($event, task)"
-            />
-            <div v-if="tasksData.review.length === 0" class="text-center py-8 text-sm text-secondary-500">
-              No hay tareas
-            </div>
-          </div>
-        </div>
       </div>
     </div>
   </AppLayout>
@@ -230,11 +202,10 @@ const form = reactive({
 })
 
 const tasksData = reactive({
+  received: props.tasks.received || [],
   todo: props.tasks.todo || [],
-  scheduled: props.tasks.scheduled || [],
   in_progress: props.tasks.in_progress || [],
   blocked: props.tasks.blocked || [],
-  review: props.tasks.review || [],
 })
 
 const draggedTask = ref(null)
@@ -306,16 +277,14 @@ const addTaskToColumn = (status, task) => {
 
 const getColumnByStatus = (status) => {
   switch (status) {
+    case 'received':
+      return tasksData.received
     case 'todo':
       return tasksData.todo
-    case 'scheduled':
-      return tasksData.scheduled
     case 'in_progress':
       return tasksData.in_progress
     case 'blocked':
       return tasksData.blocked
-    case 'review':
-      return tasksData.review
     default:
       return null
   }

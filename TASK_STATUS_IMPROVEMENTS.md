@@ -2,73 +2,71 @@
 
 ## Resumen de Cambios
 
-Esta rama implementa un sistema robusto de gestión de estados para el módulo de tareas con 8 estados bien definidos y validación de transiciones.
+Esta rama implementa un sistema robusto de gestión de estados para el módulo de tareas con 7 estados bien definidos y validación de transiciones.
 
 ## Estados Implementados
 
 ### Estados Activos
-1. **To Do (todo)** - Pendiente
-   - Color: gray
-   - Estado inicial de las tareas
-   - Transiciones permitidas: Scheduled, In Progress, Cancelled
+1. **Received (received)** - Recibida
+   - Color: indigo
+   - Estado inicial de las tareas cuando llegan al sistema
+   - La tarea aún no ha sido analizada ni planificada
+   - Transiciones permitidas: To Do, Cancelled
 
-2. **Scheduled (scheduled)** - Programada
-   - Color: purple
-   - Tarea programada para ejecutarse en el futuro
-   - Transiciones permitidas: Todo, In Progress, Blocked, Cancelled
+2. **To Do (todo)** - Por Hacer
+   - Color: gray
+   - La tarea ya fue entendida, priorizada y está lista para ejecutarse
+   - Aquí se planifica y se organiza
+   - Transiciones permitidas: In Progress, Cancelled
 
 3. **In Progress (in_progress)** - En Progreso
    - Color: blue
    - Tarea en ejecución activa
    - Registra automáticamente `started_at`
-   - Transiciones permitidas: Review, Blocked, Done, Cancelled
+   - Transiciones permitidas: Blocked, Done, Cancelled
 
 4. **Blocked (blocked)** - Bloqueada
    - Color: orange
-   - Tarea bloqueada por dependencias u obstáculos
+   - Estado temporal cuando algo externo impide avanzar
    - Requiere razón del bloqueo (`blocked_reason`)
-   - Transiciones permitidas: Todo, Scheduled, In Progress, Cancelled
-
-5. **Review (review)** - En Revisión
-   - Color: yellow
-   - Tarea esperando revisión
-   - Transiciones permitidas: In Progress, Blocked, Done
+   - Transiciones permitidas: To Do, In Progress, Cancelled
 
 ### Estados Finales
-6. **Done (done)** - Completada
+5. **Done (done)** - Finalizada
    - Color: green
-   - Tarea completada exitosamente
+   - Tarea completada exitosamente al 100%
    - Registra automáticamente `completed_at`
    - Transiciones permitidas: Archived, In Progress (requiere confirmación)
 
-7. **Cancelled (cancelled)** - Cancelada
+6. **Cancelled (cancelled)** - Cancelada
    - Color: red
    - Tarea cancelada
-   - Transiciones permitidas: Archived, Todo (requiere confirmación)
+   - Transiciones permitidas: Archived, To Do (requiere confirmación)
 
-8. **Archived (archived)** - Archivada
+7. **Archived (archived)** - Archivada
    - Color: slate
    - Tarea archivada para historial
-   - Transiciones permitidas: Todo, Done, Cancelled (requieren confirmación)
+   - Transiciones permitidas: To Do, Done, Cancelled (requieren confirmación)
 
 ## Flujo Recomendado de Estados
 
 ```
-Todo → Scheduled → In Progress → Review → Done → Archived
-  ↓                    ↓            ↓
-Cancelled          Blocked      Blocked
-  ↓                    ↓
-Archived            Todo/Scheduled/In Progress
+Received → To Do → In Progress → Done → Archived
+    ↓         ↓          ↓
+Cancelled  Cancelled  Blocked → To Do/In Progress
+                          ↓
+                      Cancelled
 ```
 
-### Excepciones
-- **Blocked**: Puede aplicarse desde cualquier estado activo
+### Notas del Flujo
+- **Received**: Todas las tareas nuevas comienzan aquí
+- **Blocked**: Estado lateral/temporal que puede aplicarse desde cualquier estado activo
 - **Cancelled**: Puede aplicarse desde cualquier estado activo
 
 ## Características Implementadas
 
 ### 1. Enum TaskStatus (`app/Enums/TaskStatus.php`)
-- Define los 8 estados del sistema
+- Define los 7 estados del sistema
 - Métodos para obtener labels, colores e íconos
 - Validación de transiciones permitidas
 - Identificación de estados activos y finales
@@ -83,11 +81,10 @@ Archived            Todo/Scheduled/In Progress
 
 **Nuevos métodos:**
 - `changeStatus(TaskStatus $newStatus, ?string $reason = null)`: Cambia estado con validación
-- `markAsScheduled()`: Marca como programada
 - `markAsBlocked(string $reason)`: Bloquea con razón
 - `markAsArchived()`: Archiva la tarea
 - `unblock()`: Desbloquea una tarea bloqueada
-- `isBlocked()`, `isScheduled()`, `isArchived()`: Verificadores de estado
+- `isBlocked()`, `isReceived()`, `isArchived()`: Verificadores de estado
 
 **Validación automática:**
 - El modelo valida transiciones en el evento `updating`
@@ -104,7 +101,8 @@ Archived            Todo/Scheduled/In Progress
 
 **Métodos actualizados:**
 - `index()`: Incluye stats de todos los estados
-- `board()`: Vista Kanban con 5 columnas (Todo, Scheduled, In Progress, Blocked, Review)
+- `board()`: Vista Kanban con 4 columnas (Received, To Do, In Progress, Blocked)
+- `store()`: Nuevas tareas comienzan en estado `received`
 
 ### 4. Sistema de Notificaciones
 Se crean notificaciones automáticas para:
@@ -113,16 +111,17 @@ Se crean notificaciones automáticas para:
 - Cambios de estado existentes actualizados
 
 ### 5. Tests Completos (`tests/Feature/TaskStatusTransitionTest.php`)
-20 tests que validan:
+19 tests que validan:
 - ✅ Transiciones permitidas entre estados
 - ✅ Transiciones prohibidas (lanzan excepciones)
 - ✅ Registro de cambios de estado
 - ✅ Bloqueo y desbloqueo de tareas
-- ✅ Flujo completo de trabajo
+- ✅ Flujo completo de trabajo (Received → To Do → In Progress → Done → Archived)
 - ✅ Validación de labels y colores del enum
 - ✅ Identificación de estados activos/finales
 - ✅ Confirmaciones requeridas
 - ✅ API de transiciones permitidas
+- ✅ Estado inicial 'received' para nuevas tareas
 
 ## Reglas de Transición
 
@@ -136,10 +135,10 @@ Estas transiciones son permitidas pero el sistema las marca como requiriendo con
 ### Transiciones Prohibidas
 Ejemplos de transiciones que lanzan `InvalidArgumentException`:
 
-- Todo → Done (debe pasar por In Progress)
-- Scheduled → Done (debe pasar por In Progress)
-- Todo → Review (debe estar en progreso primero)
-- Done → Scheduled (incoherente)
+- Received → Done (debe pasar por To Do e In Progress)
+- To Do → Done (debe pasar por In Progress)
+- Received → In Progress (debe pasar por To Do primero)
+- Done → Received (incoherente)
 
 ## Uso en el Frontend
 
@@ -190,13 +189,12 @@ await axios.patch(`/tasks/${taskId}/archive`)
 
 ## Vista Board (Kanban)
 
-La vista de tablero ahora incluye 5 columnas para estados activos:
+La vista de tablero ahora incluye 4 columnas para estados activos:
 
-1. **Pendiente** (Todo)
-2. **Programada** (Scheduled)
+1. **Recibida** (Received)
+2. **Por Hacer** (To Do)
 3. **En Progreso** (In Progress)
 4. **Bloqueada** (Blocked)
-5. **En Revisión** (Review)
 
 Las tareas pueden arrastrarse entre columnas y el sistema validará automáticamente si la transición es permitida.
 
@@ -220,17 +218,23 @@ Agrega los siguientes campos:
 ```php
 $task = Task::find(1);
 
+// Nueva tarea comienza en estado RECEIVED
+$newTask = Task::create([...]);
+// $newTask->status === TaskStatus::RECEIVED
+
 // Esto funciona
+$task->update(['status' => TaskStatus::TODO]);
 $task->markAsInProgress();
+$task->markAsDone();
 
 // Esto lanza InvalidArgumentException
-$task->markAsDone(); // No puede ir de In Progress a Done sin pasar por Review
+$task->markAsDone(); // No puede ir de TO DO a DONE sin pasar por IN_PROGRESS
 
 // Bloquear tarea
 $task->markAsBlocked('Esperando recursos del equipo de diseño');
 
 // Desbloquear
-$task->unblock(); // Vuelve a Todo automáticamente
+$task->unblock(); // Vuelve a TODO automáticamente
 ```
 
 ### Backend - Cambio Manual con Validación
@@ -274,27 +278,26 @@ if ($task->status->isFinal()) {
 ### Componentes Actualizados
 
 #### TaskCard.vue
-- ✅ Badge de estado con 8 colores
+- ✅ Badge de estado con 7 colores
 - ✅ Indicador visual para tareas bloqueadas (borde naranja, fondo naranja claro)
 - ✅ Muestra la razón del bloqueo en un alert interno
-- ✅ Colores: gray, purple, blue, orange, yellow, green, red, slate
+- ✅ Colores: indigo, gray, blue, orange, green, red, slate
 
 #### Board.vue (Vista Kanban)
-- ✅ 5 columnas de estados activos:
-  - Pendiente (gray)
-  - Programada (purple)
+- ✅ 4 columnas de estados activos:
+  - Recibida (indigo)
+  - Por Hacer (gray)
   - En Progreso (blue)
   - Bloqueada (orange)
-  - En Revisión (yellow)
 - ✅ Drag & drop entre columnas con validación
-- ✅ Grid responsive: xl:5 cols, lg:3 cols, md:2 cols
+- ✅ Grid responsive: xl:4 cols, lg:2 cols, md:2 cols
 - ✅ Colores de borde distintivos por columna
 
 #### Index.vue (Vista Lista)
-- ✅ Stats primarios (5 estados activos)
+- ✅ Stats primarios (4 estados activos: Received, To Do, In Progress, Blocked)
 - ✅ Stats secundarios (Done, Cancelled, Archived, Overdue)
 - ✅ Iconos y colores únicos para cada estado
-- ✅ Layout responsive 2/3/5 columnas
+- ✅ Layout responsive 2/2/4 columnas
 
 #### Show.vue (Vista Detalle)
 - ✅ Alerta visual para tareas bloqueadas con razón completa

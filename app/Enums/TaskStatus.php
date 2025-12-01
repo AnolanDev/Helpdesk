@@ -4,11 +4,10 @@ namespace App\Enums;
 
 enum TaskStatus: string
 {
+    case RECEIVED = 'received';
     case TODO = 'todo';
-    case SCHEDULED = 'scheduled';
     case IN_PROGRESS = 'in_progress';
     case BLOCKED = 'blocked';
-    case REVIEW = 'review';
     case DONE = 'done';
     case CANCELLED = 'cancelled';
     case ARCHIVED = 'archived';
@@ -19,12 +18,11 @@ enum TaskStatus: string
     public function label(): string
     {
         return match ($this) {
-            self::TODO => 'Pendiente',
-            self::SCHEDULED => 'Programada',
+            self::RECEIVED => 'Recibida',
+            self::TODO => 'Por Hacer',
             self::IN_PROGRESS => 'En Progreso',
             self::BLOCKED => 'Bloqueada',
-            self::REVIEW => 'En Revisión',
-            self::DONE => 'Completada',
+            self::DONE => 'Finalizada',
             self::CANCELLED => 'Cancelada',
             self::ARCHIVED => 'Archivada',
         };
@@ -36,11 +34,10 @@ enum TaskStatus: string
     public function color(): string
     {
         return match ($this) {
+            self::RECEIVED => 'indigo',
             self::TODO => 'gray',
-            self::SCHEDULED => 'purple',
             self::IN_PROGRESS => 'blue',
             self::BLOCKED => 'orange',
-            self::REVIEW => 'yellow',
             self::DONE => 'green',
             self::CANCELLED => 'red',
             self::ARCHIVED => 'slate',
@@ -53,11 +50,10 @@ enum TaskStatus: string
     public function icon(): string
     {
         return match ($this) {
-            self::TODO => 'circle',
-            self::SCHEDULED => 'calendar',
+            self::RECEIVED => 'inbox',
+            self::TODO => 'clipboard-list',
             self::IN_PROGRESS => 'play-circle',
             self::BLOCKED => 'lock',
-            self::REVIEW => 'eye',
             self::DONE => 'check-circle',
             self::CANCELLED => 'x-circle',
             self::ARCHIVED => 'archive',
@@ -70,11 +66,10 @@ enum TaskStatus: string
     public function isActive(): bool
     {
         return in_array($this, [
+            self::RECEIVED,
             self::TODO,
-            self::SCHEDULED,
             self::IN_PROGRESS,
             self::BLOCKED,
-            self::REVIEW,
         ]);
     }
 
@@ -92,62 +87,62 @@ enum TaskStatus: string
 
     /**
      * Obtener las transiciones válidas desde este estado
-     * Implementa la lógica de flujo de estados
+     *
+     * Flujo ideal:
+     * Received → To Do → In Progress → Done → Archived
+     *
+     * Blocked es un estado lateral (temporal) que puede aplicarse desde cualquier estado activo
+     * Cancelled puede aplicarse desde cualquier estado activo
      */
     public function getAllowedTransitions(): array
     {
         return match ($this) {
-            // Desde TODO se puede ir a: Scheduled, In Progress, Cancelled
-            self::TODO => [
-                self::SCHEDULED,
-                self::IN_PROGRESS,
-                self::CANCELLED,
-            ],
-
-            // Desde SCHEDULED se puede ir a: In Progress, Blocked, Cancelled, volver a TODO
-            self::SCHEDULED => [
+            // RECEIVED: Tarea recién llegada
+            // Puede ir a: To Do (cuando se entiende y planifica), Cancelled (si se rechaza)
+            self::RECEIVED => [
                 self::TODO,
-                self::IN_PROGRESS,
-                self::BLOCKED,
                 self::CANCELLED,
             ],
 
-            // Desde IN_PROGRESS se puede ir a: Review, Blocked, Done, Cancelled
+            // TO DO: Tarea entendida y lista para ejecutarse
+            // Puede ir a: In Progress (cuando se empieza), Cancelled
+            self::TODO => [
+                self::IN_PROGRESS,
+                self::CANCELLED,
+            ],
+
+            // IN_PROGRESS: Tarea siendo trabajada activamente
+            // Puede ir a: Blocked (si hay impedimento), Done (al finalizar), Cancelled
             self::IN_PROGRESS => [
-                self::REVIEW,
                 self::BLOCKED,
                 self::DONE,
                 self::CANCELLED,
             ],
 
-            // Desde BLOCKED se puede desbloquear a: TODO, Scheduled, In Progress, Cancelled
+            // BLOCKED: Estado temporal cuando algo externo impide avanzar
+            // Puede volver a: To Do (replantear), In Progress (continuar)
             self::BLOCKED => [
                 self::TODO,
-                self::SCHEDULED,
                 self::IN_PROGRESS,
                 self::CANCELLED,
             ],
 
-            // Desde REVIEW se puede ir a: In Progress (si requiere cambios), Done, Blocked
-            self::REVIEW => [
-                self::IN_PROGRESS,
-                self::BLOCKED,
-                self::DONE,
-            ],
-
-            // Desde DONE se puede: Archivar, reabrir (In Progress solo con confirmación)
+            // DONE: Tarea completada al 100%
+            // Puede ir a: Archived (archivar), In Progress (reabrir con confirmación)
             self::DONE => [
                 self::ARCHIVED,
-                self::IN_PROGRESS, // Solo con confirmación
+                self::IN_PROGRESS, // Requiere confirmación
             ],
 
-            // Desde CANCELLED se puede: Archivar, reabrir a TODO
+            // CANCELLED: Tarea cancelada
+            // Puede ir a: Archived (archivar), To Do (reactivar con confirmación)
             self::CANCELLED => [
                 self::ARCHIVED,
-                self::TODO, // Solo con confirmación
+                self::TODO, // Requiere confirmación
             ],
 
-            // Desde ARCHIVED normalmente no se cambia, pero se permite desarchive a su estado anterior
+            // ARCHIVED: Tarea archivada
+            // Permite desarchive a estados específicos (todos requieren confirmación)
             self::ARCHIVED => [
                 self::TODO,
                 self::DONE,
@@ -175,12 +170,13 @@ enum TaskStatus: string
     public function requiresConfirmation(TaskStatus $newStatus): bool
     {
         // Transiciones que requieren confirmación explícita
+        // (revertir acciones finales o desarchive)
         $confirmationRequired = [
-            [self::DONE, self::IN_PROGRESS], // Reabrir una tarea completada
-            [self::CANCELLED, self::TODO], // Reactivar una tarea cancelada
-            [self::ARCHIVED, self::TODO], // Desarchive
-            [self::ARCHIVED, self::DONE], // Desarchive
-            [self::ARCHIVED, self::CANCELLED], // Desarchive
+            [self::DONE, self::IN_PROGRESS],      // Reabrir una tarea completada
+            [self::CANCELLED, self::TODO],        // Reactivar una tarea cancelada
+            [self::ARCHIVED, self::TODO],         // Desarchive a To Do
+            [self::ARCHIVED, self::DONE],         // Desarchive a Done
+            [self::ARCHIVED, self::CANCELLED],    // Desarchive a Cancelled
         ];
 
         foreach ($confirmationRequired as [$from, $to]) {

@@ -44,11 +44,10 @@
         <span
           class="inline-flex items-center gap-1 rounded-full px-2 py-0.5 text-xs font-medium"
           :class="{
+            'bg-indigo-100 text-indigo-800': task.status_color === 'indigo',
             'bg-gray-100 text-gray-800': task.status_color === 'gray',
-            'bg-purple-100 text-purple-800': task.status_color === 'purple',
             'bg-blue-100 text-blue-800': task.status_color === 'blue',
             'bg-orange-100 text-orange-800': task.status_color === 'orange',
-            'bg-yellow-100 text-yellow-800': task.status_color === 'yellow',
             'bg-green-100 text-green-800': task.status_color === 'green',
             'bg-red-100 text-red-800': task.status_color === 'red',
             'bg-slate-100 text-slate-800': task.status_color === 'slate',

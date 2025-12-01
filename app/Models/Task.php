@@ -58,11 +58,10 @@ class Task extends Model
     ];
 
     // Estados del sistema (usando el Enum TaskStatus)
+    public const STATUS_RECEIVED = 'received';
     public const STATUS_TODO = 'todo';
-    public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_IN_PROGRESS = 'in_progress';
     public const STATUS_BLOCKED = 'blocked';
-    public const STATUS_REVIEW = 'review';
     public const STATUS_DONE = 'done';
     public const STATUS_CANCELLED = 'cancelled';
     public const STATUS_ARCHIVED = 'archived';
@@ -180,14 +179,14 @@ class Task extends Model
     /**
      * Scopes
      */
+    public function scopeReceived($query)
+    {
+        return $query->where('status', TaskStatus::RECEIVED->value);
+    }
+
     public function scopeTodo($query)
     {
         return $query->where('status', TaskStatus::TODO->value);
-    }
-
-    public function scopeScheduled($query)
-    {
-        return $query->where('status', TaskStatus::SCHEDULED->value);
     }
 
     public function scopeInProgress($query)
@@ -198,11 +197,6 @@ class Task extends Model
     public function scopeBlocked($query)
     {
         return $query->where('status', TaskStatus::BLOCKED->value);
-    }
-
-    public function scopeInReview($query)
-    {
-        return $query->where('status', TaskStatus::REVIEW->value);
     }
 
     public function scopeDone($query)
@@ -223,11 +217,10 @@ class Task extends Model
     public function scopeActive($query)
     {
         return $query->whereIn('status', [
+            TaskStatus::RECEIVED->value,
             TaskStatus::TODO->value,
-            TaskStatus::SCHEDULED->value,
             TaskStatus::IN_PROGRESS->value,
             TaskStatus::BLOCKED->value,
-            TaskStatus::REVIEW->value,
         ]);
     }
 
@@ -333,12 +326,12 @@ class Task extends Model
         return $this->status === TaskStatus::BLOCKED;
     }
 
-    public function isScheduled(): bool
+    public function isReceived(): bool
     {
         if (is_string($this->status)) {
-            return $this->status === TaskStatus::SCHEDULED->value;
+            return $this->status === TaskStatus::RECEIVED->value;
         }
-        return $this->status === TaskStatus::SCHEDULED;
+        return $this->status === TaskStatus::RECEIVED;
     }
 
     public function isOverdue(): bool
@@ -429,11 +422,6 @@ class Task extends Model
         $this->update($updateData);
     }
 
-    public function markAsScheduled(): void
-    {
-        $this->changeStatus(TaskStatus::SCHEDULED);
-    }
-
     public function markAsInProgress(): void
     {
         $this->changeStatus(TaskStatus::IN_PROGRESS);
@@ -442,11 +430,6 @@ class Task extends Model
     public function markAsBlocked(string $reason): void
     {
         $this->changeStatus(TaskStatus::BLOCKED, $reason);
-    }
-
-    public function markAsInReview(): void
-    {
-        $this->changeStatus(TaskStatus::REVIEW);
     }
 
     public function markAsDone(): void
