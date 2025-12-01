@@ -477,12 +477,9 @@ class TaskController extends Controller
                 }
             }
 
-            return response()->json(['success' => true]);
+            return back();
         } catch (\InvalidArgumentException $e) {
-            return response()->json([
-                'success' => false,
-                'message' => $e->getMessage()
-            ], 422);
+            return back()->with('error', $e->getMessage());
         }
     }
 

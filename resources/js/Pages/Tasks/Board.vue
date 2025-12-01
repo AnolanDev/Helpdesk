@@ -273,23 +273,15 @@ const handleDrop = (event, newStatus) => {
       position: 0,
     },
     {
-      preserveState: true,
+      preserveState: false,
       preserveScroll: true,
-      onSuccess: (page) => {
-        // Actualizar visualmente las columnas
-        removeTaskFromColumn(task.status, task.id)
-        addTaskToColumn(newStatus, { ...task, status: newStatus })
+      onSuccess: () => {
+        // El reload de la página mostrará el estado actualizado
         draggedTask.value = null
       },
-      onError: (errors) => {
+      onError: () => {
+        // El error se mostrará como flash message
         draggedTask.value = null
-
-        // Mostrar mensaje de error
-        if (errors && errors.message) {
-          alert(errors.message)
-        } else {
-          alert('No se puede mover la tarea a este estado. Transición no permitida.')
-        }
       },
     }
   )
