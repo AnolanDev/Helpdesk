@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use App\Enums\TaskStatus;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
@@ -22,6 +23,10 @@ class Task extends Model
         'assigned_to_name',
         'assigned_at',
         'status',
+        'previous_status',
+        'status_changed_at',
+        'status_changed_by',
+        'blocked_reason',
         'priority',
         'due_date',
         'completed_at',
@@ -34,10 +39,13 @@ class Task extends Model
     ];
 
     protected $casts = [
+        'status' => TaskStatus::class,
+        'previous_status' => TaskStatus::class,
         'assigned_at' => 'datetime',
         'due_date' => 'datetime',
         'completed_at' => 'datetime',
         'started_at' => 'datetime',
+        'status_changed_at' => 'datetime',
         'labels' => 'array',
     ];
 
@@ -49,12 +57,15 @@ class Task extends Model
         'is_overdue',
     ];
 
-    // Estados tipo Trello
+    // Estados del sistema (usando el Enum TaskStatus)
     public const STATUS_TODO = 'todo';
+    public const STATUS_SCHEDULED = 'scheduled';
     public const STATUS_IN_PROGRESS = 'in_progress';
+    public const STATUS_BLOCKED = 'blocked';
     public const STATUS_REVIEW = 'review';
     public const STATUS_DONE = 'done';
     public const STATUS_CANCELLED = 'cancelled';
+    public const STATUS_ARCHIVED = 'archived';
 
     // Prioridades
     public const PRIORITY_LOW = 'baja';
@@ -94,14 +105,47 @@ class Task extends Model
 
         // Actualizar fechas según cambios de estado
         static::updating(function ($task) {
-            // Si se marca como en progreso
-            if ($task->isDirty('status') && $task->status === static::STATUS_IN_PROGRESS && !$task->started_at) {
-                $task->started_at = now();
-            }
+            // Validar transiciones de estado
+            if ($task->isDirty('status')) {
+                $oldStatus = $task->getOriginal('status');
+                $newStatus = $task->status;
 
-            // Si se marca como completada
-            if ($task->isDirty('status') && $task->status === static::STATUS_DONE && !$task->completed_at) {
-                $task->completed_at = now();
+                // Si oldStatus es string, convertir a enum
+                if (is_string($oldStatus)) {
+                    $oldStatus = TaskStatus::from($oldStatus);
+                }
+
+                // Si newStatus es string, convertir a enum
+                if (is_string($newStatus)) {
+                    $newStatus = TaskStatus::from($newStatus);
+                }
+
+                // Validar que la transición sea permitida
+                if (!$oldStatus->canTransitionTo($newStatus)) {
+                    throw new \InvalidArgumentException(
+                        "No se puede cambiar el estado de '{$oldStatus->label()}' a '{$newStatus->label()}'. " .
+                        "Transición no permitida."
+                    );
+                }
+
+                // Registrar el cambio de estado
+                $task->previous_status = $oldStatus;
+                $task->status_changed_at = now();
+                $task->status_changed_by = auth()->id();
+
+                // Actualizar fechas específicas según el nuevo estado
+                if ($newStatus === TaskStatus::IN_PROGRESS && !$task->started_at) {
+                    $task->started_at = now();
+                }
+
+                if ($newStatus === TaskStatus::DONE && !$task->completed_at) {
+                    $task->completed_at = now();
+                }
+
+                // Limpiar blocked_reason si ya no está bloqueada
+                if ($oldStatus === TaskStatus::BLOCKED && $newStatus !== TaskStatus::BLOCKED) {
+                    $task->blocked_reason = null;
+                }
             }
 
             // Si se asigna a alguien
@@ -138,30 +182,52 @@ class Task extends Model
      */
     public function scopeTodo($query)
     {
-        return $query->where('status', static::STATUS_TODO);
+        return $query->where('status', TaskStatus::TODO->value);
+    }
+
+    public function scopeScheduled($query)
+    {
+        return $query->where('status', TaskStatus::SCHEDULED->value);
     }
 
     public function scopeInProgress($query)
     {
-        return $query->where('status', static::STATUS_IN_PROGRESS);
+        return $query->where('status', TaskStatus::IN_PROGRESS->value);
+    }
+
+    public function scopeBlocked($query)
+    {
+        return $query->where('status', TaskStatus::BLOCKED->value);
     }
 
     public function scopeInReview($query)
     {
-        return $query->where('status', static::STATUS_REVIEW);
+        return $query->where('status', TaskStatus::REVIEW->value);
     }
 
     public function scopeDone($query)
     {
-        return $query->where('status', static::STATUS_DONE);
+        return $query->where('status', TaskStatus::DONE->value);
+    }
+
+    public function scopeCancelled($query)
+    {
+        return $query->where('status', TaskStatus::CANCELLED->value);
+    }
+
+    public function scopeArchived($query)
+    {
+        return $query->where('status', TaskStatus::ARCHIVED->value);
     }
 
     public function scopeActive($query)
     {
         return $query->whereIn('status', [
-            static::STATUS_TODO,
-            static::STATUS_IN_PROGRESS,
-            static::STATUS_REVIEW,
+            TaskStatus::TODO->value,
+            TaskStatus::SCHEDULED->value,
+            TaskStatus::IN_PROGRESS->value,
+            TaskStatus::BLOCKED->value,
+            TaskStatus::REVIEW->value,
         ]);
     }
 
@@ -169,7 +235,11 @@ class Task extends Model
     {
         return $query->whereNotNull('due_date')
             ->where('due_date', '<', now())
-            ->whereNotIn('status', [static::STATUS_DONE, static::STATUS_CANCELLED]);
+            ->whereNotIn('status', [
+                TaskStatus::DONE->value,
+                TaskStatus::CANCELLED->value,
+                TaskStatus::ARCHIVED->value,
+            ]);
     }
 
     public function scopeAssignedTo($query, $userId)
@@ -223,21 +293,52 @@ class Task extends Model
 
     public function isActive(): bool
     {
-        return in_array($this->status, [
-            static::STATUS_TODO,
-            static::STATUS_IN_PROGRESS,
-            static::STATUS_REVIEW,
-        ]);
+        if (is_string($this->status)) {
+            $status = TaskStatus::from($this->status);
+        } else {
+            $status = $this->status;
+        }
+        return $status->isActive();
     }
 
     public function isDone(): bool
     {
-        return $this->status === static::STATUS_DONE;
+        if (is_string($this->status)) {
+            return $this->status === TaskStatus::DONE->value;
+        }
+        return $this->status === TaskStatus::DONE;
     }
 
     public function isCancelled(): bool
     {
-        return $this->status === static::STATUS_CANCELLED;
+        if (is_string($this->status)) {
+            return $this->status === TaskStatus::CANCELLED->value;
+        }
+        return $this->status === TaskStatus::CANCELLED;
+    }
+
+    public function isArchived(): bool
+    {
+        if (is_string($this->status)) {
+            return $this->status === TaskStatus::ARCHIVED->value;
+        }
+        return $this->status === TaskStatus::ARCHIVED;
+    }
+
+    public function isBlocked(): bool
+    {
+        if (is_string($this->status)) {
+            return $this->status === TaskStatus::BLOCKED->value;
+        }
+        return $this->status === TaskStatus::BLOCKED;
+    }
+
+    public function isScheduled(): bool
+    {
+        if (is_string($this->status)) {
+            return $this->status === TaskStatus::SCHEDULED->value;
+        }
+        return $this->status === TaskStatus::SCHEDULED;
     }
 
     public function isOverdue(): bool
@@ -256,14 +357,10 @@ class Task extends Model
 
     public function getStatusLabelAttribute(): string
     {
-        return match ($this->status) {
-            static::STATUS_TODO => 'Por Hacer',
-            static::STATUS_IN_PROGRESS => 'En Progreso',
-            static::STATUS_REVIEW => 'En Revisión',
-            static::STATUS_DONE => 'Completada',
-            static::STATUS_CANCELLED => 'Cancelada',
-            default => $this->status,
-        };
+        if (is_string($this->status)) {
+            return TaskStatus::from($this->status)->label();
+        }
+        return $this->status->label();
     }
 
     public function getPriorityLabelAttribute(): string
@@ -279,14 +376,10 @@ class Task extends Model
 
     public function getStatusColorAttribute(): string
     {
-        return match ($this->status) {
-            static::STATUS_TODO => 'gray',
-            static::STATUS_IN_PROGRESS => 'blue',
-            static::STATUS_REVIEW => 'yellow',
-            static::STATUS_DONE => 'green',
-            static::STATUS_CANCELLED => 'red',
-            default => 'gray',
-        };
+        if (is_string($this->status)) {
+            return TaskStatus::from($this->status)->color();
+        }
+        return $this->status->color();
     }
 
     public function getPriorityColorAttribute(): string
@@ -312,33 +405,74 @@ class Task extends Model
         ]);
     }
 
+    /**
+     * Cambiar el estado de la tarea validando transiciones
+     */
+    public function changeStatus(TaskStatus $newStatus, ?string $reason = null): void
+    {
+        $currentStatus = is_string($this->status) ? TaskStatus::from($this->status) : $this->status;
+
+        if (!$currentStatus->canTransitionTo($newStatus)) {
+            throw new \InvalidArgumentException(
+                "No se puede cambiar el estado de '{$currentStatus->label()}' a '{$newStatus->label()}'. " .
+                "Transición no permitida."
+            );
+        }
+
+        $updateData = ['status' => $newStatus];
+
+        // Si se bloquea, guardar la razón
+        if ($newStatus === TaskStatus::BLOCKED && $reason) {
+            $updateData['blocked_reason'] = $reason;
+        }
+
+        $this->update($updateData);
+    }
+
+    public function markAsScheduled(): void
+    {
+        $this->changeStatus(TaskStatus::SCHEDULED);
+    }
+
     public function markAsInProgress(): void
     {
-        $this->update([
-            'status' => static::STATUS_IN_PROGRESS,
-            'started_at' => $this->started_at ?? now(),
-        ]);
+        $this->changeStatus(TaskStatus::IN_PROGRESS);
+    }
+
+    public function markAsBlocked(string $reason): void
+    {
+        $this->changeStatus(TaskStatus::BLOCKED, $reason);
     }
 
     public function markAsInReview(): void
     {
-        $this->update([
-            'status' => static::STATUS_REVIEW,
-        ]);
+        $this->changeStatus(TaskStatus::REVIEW);
     }
 
     public function markAsDone(): void
     {
-        $this->update([
-            'status' => static::STATUS_DONE,
-            'completed_at' => now(),
-        ]);
+        $this->changeStatus(TaskStatus::DONE);
     }
 
     public function markAsCancelled(): void
     {
+        $this->changeStatus(TaskStatus::CANCELLED);
+    }
+
+    public function markAsArchived(): void
+    {
+        $this->changeStatus(TaskStatus::ARCHIVED);
+    }
+
+    public function unblock(): void
+    {
+        if (!$this->isBlocked()) {
+            throw new \InvalidArgumentException('La tarea no está bloqueada.');
+        }
+
         $this->update([
-            'status' => static::STATUS_CANCELLED,
+            'status' => TaskStatus::TODO,
+            'blocked_reason' => null,
         ]);
     }
 
@@ -357,13 +491,25 @@ class Task extends Model
      */
     public static function getStatuses(): array
     {
-        return [
-            static::STATUS_TODO => 'Por Hacer',
-            static::STATUS_IN_PROGRESS => 'En Progreso',
-            static::STATUS_REVIEW => 'En Revisión',
-            static::STATUS_DONE => 'Completada',
-            static::STATUS_CANCELLED => 'Cancelada',
-        ];
+        return TaskStatus::toArray();
+    }
+
+    public static function getActiveStatuses(): array
+    {
+        $statuses = [];
+        foreach (TaskStatus::activeStatuses() as $status) {
+            $statuses[$status->value] = $status->label();
+        }
+        return $statuses;
+    }
+
+    public static function getFinalStatuses(): array
+    {
+        $statuses = [];
+        foreach (TaskStatus::finalStatuses() as $status) {
+            $statuses[$status->value] = $status->label();
+        }
+        return $statuses;
     }
 
     public static function getPriorities(): array

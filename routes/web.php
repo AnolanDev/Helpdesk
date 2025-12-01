@@ -51,6 +51,10 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
     Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment'])->name('tasks.comments');
     Route::patch('/tasks/{task}/position', [TaskController::class, 'updatePosition'])->name('tasks.position');
+    Route::patch('/tasks/{task}/block', [TaskController::class, 'block'])->name('tasks.block');
+    Route::patch('/tasks/{task}/unblock', [TaskController::class, 'unblock'])->name('tasks.unblock');
+    Route::patch('/tasks/{task}/archive', [TaskController::class, 'archive'])->name('tasks.archive');
+    Route::get('/tasks/{task}/transitions', [TaskController::class, 'getAllowedTransitions'])->name('tasks.transitions');
 
     // Users Routes
     Route::resource('users', UserController::class);

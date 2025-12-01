@@ -2,6 +2,7 @@
 
 namespace App\Http\Controllers;
 
+use App\Enums\TaskStatus;
 use App\Models\Task;
 use App\Models\User;
 use Illuminate\Http\Request;
@@ -115,8 +116,13 @@ class TaskController extends Controller
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
             'stats' => [
                 'todo' => (clone $statsQuery)->todo()->count(),
+                'scheduled' => (clone $statsQuery)->scheduled()->count(),
                 'in_progress' => (clone $statsQuery)->inProgress()->count(),
+                'blocked' => (clone $statsQuery)->blocked()->count(),
                 'in_review' => (clone $statsQuery)->inReview()->count(),
+                'done' => (clone $statsQuery)->done()->count(),
+                'cancelled' => (clone $statsQuery)->cancelled()->count(),
+                'archived' => (clone $statsQuery)->archived()->count(),
                 'overdue' => (clone $statsQuery)->overdue()->count(),
             ],
         ]);
@@ -149,15 +155,20 @@ class TaskController extends Controller
         }
 
         // Obtener tareas activas agrupadas por estado
-        $tasks = $query->active()->orderBy('position', 'asc')->get()->groupBy('status');
+        $tasks = $query->active()->orderBy('position', 'asc')->get()->groupBy(function ($task) {
+            return is_string($task->status) ? $task->status : $task->status->value;
+        });
 
         return Inertia::render('Tasks/Board', [
             'tasks' => [
-                'todo' => $tasks->get(Task::STATUS_TODO, collect())->values(),
-                'in_progress' => $tasks->get(Task::STATUS_IN_PROGRESS, collect())->values(),
-                'review' => $tasks->get(Task::STATUS_REVIEW, collect())->values(),
+                'todo' => $tasks->get(TaskStatus::TODO->value, collect())->values(),
+                'scheduled' => $tasks->get(TaskStatus::SCHEDULED->value, collect())->values(),
+                'in_progress' => $tasks->get(TaskStatus::IN_PROGRESS->value, collect())->values(),
+                'blocked' => $tasks->get(TaskStatus::BLOCKED->value, collect())->values(),
+                'review' => $tasks->get(TaskStatus::REVIEW->value, collect())->values(),
             ],
             'filters' => $request->only(['assigned_to', 'priority']),
+            'statuses' => Task::getStatuses(),
             'priorities' => Task::getPriorities(),
             'users' => User::active()->orderBy('name')->get(['id', 'name']),
         ]);
@@ -457,5 +468,118 @@ class TaskController extends Controller
         }
 
         return back();
+    }
+
+    /**
+     * Block a task with a reason.
+     */
+    public function block(Request $request, Task $task)
+    {
+        $this->authorize('updateStatus', $task);
+
+        $validated = $request->validate([
+            'blocked_reason' => 'required|string|max:1000',
+        ]);
+
+        try {
+            $task->markAsBlocked($validated['blocked_reason']);
+
+            // Notificar cambio de estado
+            $notifyUserId = $task->assigned_to ?? $task->created_by;
+            if ($notifyUserId && $notifyUserId !== auth()->id()) {
+                \App\Models\Notification::create([
+                    'user_id' => $notifyUserId,
+                    'type' => 'task_blocked',
+                    'title' => 'Tarea bloqueada',
+                    'message' => "La tarea '{$task->title}' ha sido bloqueada: {$validated['blocked_reason']}",
+                    'data' => [
+                        'task_id' => $task->id,
+                        'task_number' => $task->task_number,
+                        'blocked_by' => auth()->user()->name,
+                        'reason' => $validated['blocked_reason'],
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Tarea bloqueada exitosamente.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Unblock a task.
+     */
+    public function unblock(Task $task)
+    {
+        $this->authorize('updateStatus', $task);
+
+        try {
+            $task->unblock();
+
+            // Notificar cambio de estado
+            $notifyUserId = $task->assigned_to ?? $task->created_by;
+            if ($notifyUserId && $notifyUserId !== auth()->id()) {
+                \App\Models\Notification::create([
+                    'user_id' => $notifyUserId,
+                    'type' => 'task_unblocked',
+                    'title' => 'Tarea desbloqueada',
+                    'message' => "La tarea '{$task->title}' ha sido desbloqueada",
+                    'data' => [
+                        'task_id' => $task->id,
+                        'task_number' => $task->task_number,
+                        'unblocked_by' => auth()->user()->name,
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Tarea desbloqueada exitosamente.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Archive a task.
+     */
+    public function archive(Task $task)
+    {
+        $this->authorize('updateStatus', $task);
+
+        try {
+            $task->markAsArchived();
+
+            return back()->with('success', 'Tarea archivada exitosamente.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
+        }
+    }
+
+    /**
+     * Get allowed transitions for a task status.
+     */
+    public function getAllowedTransitions(Task $task)
+    {
+        $this->authorize('view', $task);
+
+        $currentStatus = is_string($task->status) ? TaskStatus::from($task->status) : $task->status;
+
+        $allowedTransitions = [];
+        foreach ($currentStatus->getAllowedTransitions() as $transition) {
+            $allowedTransitions[] = [
+                'value' => $transition->value,
+                'label' => $transition->label(),
+                'color' => $transition->color(),
+                'requires_confirmation' => $currentStatus->requiresConfirmation($transition),
+            ];
+        }
+
+        return response()->json([
+            'current_status' => [
+                'value' => $currentStatus->value,
+                'label' => $currentStatus->label(),
+            ],
+            'allowed_transitions' => $allowedTransitions,
+        ]);
     }
 }
