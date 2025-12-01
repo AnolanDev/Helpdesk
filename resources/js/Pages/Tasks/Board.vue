@@ -275,14 +275,21 @@ const handleDrop = (event, newStatus) => {
     {
       preserveState: true,
       preserveScroll: true,
-      onSuccess: () => {
+      onSuccess: (page) => {
         // Actualizar visualmente las columnas
         removeTaskFromColumn(task.status, task.id)
         addTaskToColumn(newStatus, { ...task, status: newStatus })
         draggedTask.value = null
       },
-      onError: () => {
+      onError: (errors) => {
         draggedTask.value = null
+
+        // Mostrar mensaje de error
+        if (errors && errors.message) {
+          alert(errors.message)
+        } else {
+          alert('No se puede mover la tarea a este estado. Transición no permitida.')
+        }
       },
     }
   )

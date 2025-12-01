@@ -312,32 +312,37 @@ class TaskController extends Controller
         }
 
         $oldStatusLabel = $task->status_label;
-        $task->update(['status' => $newStatus]);
 
-        // Agregar comentario automático del cambio de estado
-        $task->addComment(
-            "Estado cambiado de '{$oldStatusLabel}' a '{$task->status_label}'",
-            'status_change'
-        );
+        try {
+            $task->update(['status' => $newStatus]);
 
-        // Notificar cambio de estado
-        $notifyUserId = $task->assigned_to ?? $task->created_by;
-        if ($notifyUserId && $notifyUserId !== auth()->id()) {
-            \App\Models\Notification::create([
-                'user_id' => $notifyUserId,
-                'type' => 'task_status_changed',
-                'title' => 'Estado de tarea actualizado',
-                'message' => "La tarea '{$task->title}' cambió a: {$task->status_label}",
-                'data' => [
-                    'task_id' => $task->id,
-                    'task_number' => $task->task_number,
-                    'old_status' => $oldStatusLabel,
-                    'new_status' => $task->status_label,
-                ],
-            ]);
+            // Agregar comentario automático del cambio de estado
+            $task->addComment(
+                "Estado cambiado de '{$oldStatusLabel}' a '{$task->status_label}'",
+                'status_change'
+            );
+
+            // Notificar cambio de estado
+            $notifyUserId = $task->assigned_to ?? $task->created_by;
+            if ($notifyUserId && $notifyUserId !== auth()->id()) {
+                \App\Models\Notification::create([
+                    'user_id' => $notifyUserId,
+                    'type' => 'task_status_changed',
+                    'title' => 'Estado de tarea actualizado',
+                    'message' => "La tarea '{$task->title}' cambió a: {$task->status_label}",
+                    'data' => [
+                        'task_id' => $task->id,
+                        'task_number' => $task->task_number,
+                        'old_status' => $oldStatusLabel,
+                        'new_status' => $task->status_label,
+                    ],
+                ]);
+            }
+
+            return back()->with('success', 'Estado actualizado exitosamente.');
+        } catch (\InvalidArgumentException $e) {
+            return back()->with('error', $e->getMessage());
         }
-
-        return back()->with('success', 'Estado actualizado exitosamente.');
     }
 
     /**
@@ -434,40 +439,47 @@ class TaskController extends Controller
         $oldStatus = $task->status;
         $newStatus = $validated['status'];
 
-        $task->update([
-            'position' => $validated['position'],
-            'status' => $validated['status'],
-        ]);
+        try {
+            $task->update([
+                'position' => $validated['position'],
+                'status' => $validated['status'],
+            ]);
 
-        // Si el estado cambió, agregar comentario automático
-        if ($oldStatus !== $newStatus) {
-            $oldStatusLabel = Task::getStatuses()[$oldStatus];
-            $newStatusLabel = Task::getStatuses()[$newStatus];
+            // Si el estado cambió, agregar comentario automático
+            if ($oldStatus !== $newStatus) {
+                $oldStatusLabel = Task::getStatuses()[$oldStatus];
+                $newStatusLabel = Task::getStatuses()[$newStatus];
 
-            $task->addComment(
-                "Estado cambiado de '{$oldStatusLabel}' a '{$newStatusLabel}' (tablero Kanban)",
-                'status_change'
-            );
+                $task->addComment(
+                    "Estado cambiado de '{$oldStatusLabel}' a '{$newStatusLabel}' (tablero Kanban)",
+                    'status_change'
+                );
 
-            // Notificar cambio de estado
-            $notifyUserId = $task->assigned_to ?? $task->created_by;
-            if ($notifyUserId && $notifyUserId !== auth()->id()) {
-                \App\Models\Notification::create([
-                    'user_id' => $notifyUserId,
-                    'type' => 'task_status_changed',
-                    'title' => 'Estado de tarea actualizado',
-                    'message' => "La tarea '{$task->title}' cambió a: {$newStatusLabel}",
-                    'data' => [
-                        'task_id' => $task->id,
-                        'task_number' => $task->task_number,
-                        'old_status' => $oldStatusLabel,
-                        'new_status' => $newStatusLabel,
-                    ],
-                ]);
+                // Notificar cambio de estado
+                $notifyUserId = $task->assigned_to ?? $task->created_by;
+                if ($notifyUserId && $notifyUserId !== auth()->id()) {
+                    \App\Models\Notification::create([
+                        'user_id' => $notifyUserId,
+                        'type' => 'task_status_changed',
+                        'title' => 'Estado de tarea actualizado',
+                        'message' => "La tarea '{$task->title}' cambió a: {$newStatusLabel}",
+                        'data' => [
+                            'task_id' => $task->id,
+                            'task_number' => $task->task_number,
+                            'old_status' => $oldStatusLabel,
+                            'new_status' => $newStatusLabel,
+                        ],
+                    ]);
+                }
             }
-        }
 
-        return back();
+            return response()->json(['success' => true]);
+        } catch (\InvalidArgumentException $e) {
+            return response()->json([
+                'success' => false,
+                'message' => $e->getMessage()
+            ], 422);
+        }
     }
 
     /**

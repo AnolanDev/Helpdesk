@@ -161,13 +161,15 @@
                   v-model="statusForm.status"
                   class="block w-full rounded-md border-secondary-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
                 >
-                  <option v-for="(label, value) in statuses" :key="value" :value="value">
-                    {{ label }}
+                  <option :value="task.status">{{ task.status_label }} (actual)</option>
+                  <option v-for="transition in allowedTransitions" :key="transition.value" :value="transition.value">
+                    {{ transition.label }}
+                    <span v-if="transition.requires_confirmation">⚠️</span>
                   </option>
                 </select>
                 <button
                   type="submit"
-                  :disabled="statusForm.processing"
+                  :disabled="statusForm.processing || statusForm.status === task.status"
                   class="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-700 disabled:opacity-50"
                 >
                   Cambiar Estado
@@ -308,9 +310,10 @@
 </template>
 
 <script setup>
-import { ref } from 'vue'
+import { ref, onMounted } from 'vue'
 import { useForm, Link, router } from '@inertiajs/vue3'
 import AppLayout from '@/Layouts/AppLayout.vue'
+import axios from 'axios'
 
 const props = defineProps({
   task: Object,
@@ -321,6 +324,7 @@ const props = defineProps({
 })
 
 const showBlockModal = ref(false)
+const allowedTransitions = ref([])
 
 const commentForm = useForm({
   comment: '',
@@ -348,12 +352,6 @@ const submitComment = () => {
     onSuccess: () => {
       commentForm.reset()
     },
-  })
-}
-
-const updateStatus = () => {
-  statusForm.patch(route('tasks.status', props.task.id), {
-    preserveScroll: true,
   })
 }
 
@@ -398,4 +396,45 @@ const formatDate = (date) => {
     minute: '2-digit'
   })
 }
+
+const loadAllowedTransitions = async () => {
+  try {
+    const response = await axios.get(route('tasks.transitions', props.task.id))
+    allowedTransitions.value = response.data.allowed_transitions
+  } catch (error) {
+    console.error('Error loading transitions:', error)
+    // Fallback: usar todos los estados si hay error
+    allowedTransitions.value = Object.entries(props.statuses)
+      .filter(([value]) => value !== props.task.status)
+      .map(([value, label]) => ({
+        value,
+        label,
+        requires_confirmation: false
+      }))
+  }
+}
+
+const updateStatus = () => {
+  const selectedTransition = allowedTransitions.value.find(
+    t => t.value === statusForm.status
+  )
+
+  if (selectedTransition && selectedTransition.requires_confirmation) {
+    if (!confirm(`⚠️ Esta transición requiere confirmación.\n\n¿Estás seguro de que deseas cambiar el estado a "${selectedTransition.label}"?`)) {
+      statusForm.status = props.task.status
+      return
+    }
+  }
+
+  statusForm.patch(route('tasks.status', props.task.id), {
+    preserveScroll: true,
+    onSuccess: () => {
+      loadAllowedTransitions()
+    }
+  })
+}
+
+onMounted(() => {
+  loadAllowedTransitions()
+})
 </script>
