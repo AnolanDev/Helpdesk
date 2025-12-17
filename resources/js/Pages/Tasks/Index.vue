@@ -1,391 +1,406 @@
 <template>
-  <AppLayout>
-    <div class="space-y-6">
-      <!-- Header -->
-      <div class="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
-        <div>
-          <h1 class="text-2xl font-bold text-secondary-900 sm:text-3xl">Mis Tareas</h1>
-          <p class="mt-2 text-sm text-secondary-600">
-            Gestiona tus tareas y colabora con tu equipo
+  <Head title="Tareas" />
+
+  <AuthenticatedLayout>
+    <template #header>
+      <div class="flex items-center justify-between">
+        <div class="flex items-center gap-3">
+          <h2 class="text-xl font-semibold leading-tight text-secondary-800 dark:text-secondary-100">Tareas</h2>
+          <button
+            @click="manualRefresh"
+            :disabled="isRefreshing"
+            class="rounded-lg p-2 text-secondary-600 transition-all hover:bg-secondary-100 hover:text-secondary-900 disabled:opacity-50 dark:text-secondary-400 dark:hover:bg-secondary-700 dark:hover:text-secondary-100"
+            :class="{ 'animate-spin': isRefreshing }"
+            title="Actualizar tareas"
+          >
+            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15" />
+            </svg>
+          </button>
+        </div>
+        <Link
+          :href="route('tasks.create')"
+          class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
+        >
+          <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+          </svg>
+          Nueva Tarea
+        </Link>
+      </div>
+    </template>
+
+    <div class="py-12">
+      <div class="mx-auto max-w-7xl sm:px-6 lg:px-8">
+        <!-- Stats Cards -->
+        <div class="mb-6 grid gap-4 sm:grid-cols-2 lg:grid-cols-4 xl:grid-cols-7">
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Creadas</p>
+                <p class="mt-1 text-2xl font-semibold text-secondary-900 dark:text-secondary-100">{{ stats.creada }}</p>
+              </div>
+              <div class="rounded-full bg-gray-100 p-3 dark:bg-gray-900/30">
+                <svg class="h-6 w-6 text-gray-600 dark:text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Analizadas</p>
+                <p class="mt-1 text-2xl font-semibold text-blue-900 dark:text-blue-400">{{ stats.analizada }}</p>
+              </div>
+              <div class="rounded-full bg-blue-100 p-3 dark:bg-blue-900/30">
+                <svg class="h-6 w-6 text-blue-600 dark:text-blue-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Programadas</p>
+                <p class="mt-1 text-2xl font-semibold text-purple-900 dark:text-purple-400">{{ stats.programada }}</p>
+              </div>
+              <div class="rounded-full bg-purple-100 p-3 dark:bg-purple-900/30">
+                <svg class="h-6 w-6 text-purple-600 dark:text-purple-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">En Progreso</p>
+                <p class="mt-1 text-2xl font-semibold text-yellow-900 dark:text-yellow-400">{{ stats.en_progreso }}</p>
+              </div>
+              <div class="rounded-full bg-yellow-100 p-3 dark:bg-yellow-900/30">
+                <svg class="h-6 w-6 text-yellow-600 dark:text-yellow-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Finalizadas</p>
+                <p class="mt-1 text-2xl font-semibold text-green-900 dark:text-green-400">{{ stats.finalizada }}</p>
+              </div>
+              <div class="rounded-full bg-green-100 p-3 dark:bg-green-900/30">
+                <svg class="h-6 w-6 text-green-600 dark:text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Canceladas</p>
+                <p class="mt-1 text-2xl font-semibold text-red-900 dark:text-red-400">{{ stats.cancelada }}</p>
+              </div>
+              <div class="rounded-full bg-red-100 p-3 dark:bg-red-900/30">
+                <svg class="h-6 w-6 text-red-600 dark:text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M6 18L18 6M6 6l12 12"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+
+          <div class="rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+            <div class="flex items-center justify-between">
+              <div>
+                <p class="text-sm font-medium text-secondary-600 dark:text-secondary-400">Vencidas</p>
+                <p class="mt-1 text-2xl font-semibold text-orange-900 dark:text-orange-400">{{ stats.overdue }}</p>
+              </div>
+              <div class="rounded-full bg-orange-100 p-3 dark:bg-orange-900/30">
+                <svg class="h-6 w-6 text-orange-600 dark:text-orange-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                  <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                </svg>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Filters -->
+        <div class="mb-6 rounded-lg bg-white p-4 shadow dark:bg-secondary-800">
+          <div class="grid gap-4 md:grid-cols-2 lg:grid-cols-4">
+            <!-- Search -->
+            <div>
+              <label for="search" class="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Buscar</label>
+              <input
+                id="search"
+                v-model="filters.search"
+                type="text"
+                placeholder="Título o descripción..."
+                class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100"
+                @input="debouncedFilter"
+              />
+            </div>
+
+            <!-- Status Filter -->
+            <div>
+              <label for="status" class="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Estado</label>
+              <select
+                id="status"
+                v-model="filters.status"
+                class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100"
+                @change="applyFilters"
+              >
+                <option value="">Todos los estados</option>
+                <option v-for="(label, value) in statuses" :key="value" :value="value">
+                  {{ label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Priority Filter -->
+            <div>
+              <label for="priority" class="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Prioridad</label>
+              <select
+                id="priority"
+                v-model="filters.priority"
+                class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100"
+                @change="applyFilters"
+              >
+                <option value="">Todas las prioridades</option>
+                <option v-for="(label, value) in priorities" :key="value" :value="value">
+                  {{ label }}
+                </option>
+              </select>
+            </div>
+
+            <!-- Board Filter -->
+            <div>
+              <label for="board_id" class="block text-sm font-medium text-secondary-700 dark:text-secondary-300">Tablero</label>
+              <select
+                id="board_id"
+                v-model="filters.board_id"
+                class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100"
+                @change="applyFilters"
+              >
+                <option value="">Todos los tableros</option>
+                <option v-for="board in boards" :key="board.id" :value="board.id">
+                  {{ board.name }}
+                </option>
+              </select>
+            </div>
+          </div>
+
+          <!-- Additional Filters -->
+          <div class="mt-4 flex flex-wrap items-center gap-4">
+            <label class="flex items-center">
+              <input
+                v-model="filters.show_completed"
+                type="checkbox"
+                class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 dark:border-secondary-600 dark:bg-secondary-700"
+                @change="applyFilters"
+              />
+              <span class="ml-2 text-sm text-secondary-700 dark:text-secondary-300">Mostrar completadas</span>
+            </label>
+            <label class="flex items-center">
+              <input
+                v-model="filters.show_overdue"
+                type="checkbox"
+                class="rounded border-secondary-300 text-primary-600 focus:ring-primary-500 dark:border-secondary-600 dark:bg-secondary-700"
+                @change="applyFilters"
+              />
+              <span class="ml-2 text-sm text-secondary-700 dark:text-secondary-300">Solo vencidas</span>
+            </label>
+          </div>
+
+          <!-- Clear Filters -->
+          <div v-if="hasActiveFilters" class="mt-4">
+            <button
+              @click="clearFilters"
+              type="button"
+              class="text-sm text-primary-600 hover:text-primary-800 dark:text-primary-400 dark:hover:text-primary-300"
+            >
+              Limpiar filtros
+            </button>
+          </div>
+        </div>
+
+        <!-- Tasks Grid -->
+        <div v-if="tasks.data.length > 0" class="grid gap-6 sm:grid-cols-2 lg:grid-cols-3">
+          <TaskCard v-for="task in tasks.data" :key="task.id" :task="task" />
+        </div>
+
+        <!-- Empty State -->
+        <div v-else class="rounded-lg bg-white p-12 text-center shadow dark:bg-secondary-800">
+          <svg
+            class="mx-auto h-12 w-12 text-secondary-400 dark:text-secondary-500"
+            fill="none"
+            stroke="currentColor"
+            viewBox="0 0 24 24"
+          >
+            <path
+              stroke-linecap="round"
+              stroke-linejoin="round"
+              stroke-width="2"
+              d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+            ></path>
+          </svg>
+          <h3 class="mt-2 text-sm font-medium text-secondary-900 dark:text-secondary-100">No hay tareas</h3>
+          <p class="mt-1 text-sm text-secondary-500 dark:text-secondary-400">
+            {{ hasActiveFilters ? 'No se encontraron resultados con los filtros aplicados.' : 'Comienza creando una nueva tarea.' }}
           </p>
-        </div>
-        <div class="flex gap-2">
-          <Link
-            :href="route('tasks.board')"
-            class="inline-flex items-center justify-center gap-2 rounded-lg bg-secondary-100 px-4 py-2.5 text-sm font-semibold text-secondary-700 transition-all hover:bg-secondary-200"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2" />
-            </svg>
-            Vista Tablero
-          </Link>
-          <Link
-            :href="route('tasks.create')"
-            class="inline-flex items-center justify-center gap-2 rounded-lg bg-primary-600 px-4 py-2.5 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700"
-          >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 6v6m0 0v6m0-6h6m-6 0H6" />
-            </svg>
-            Nueva Tarea
-          </Link>
-        </div>
-      </div>
-
-      <!-- Stats Grid -->
-      <div class="grid gap-3 grid-cols-2 sm:grid-cols-2 lg:grid-cols-4">
-        <!-- Recibida -->
-        <div class="rounded-lg border border-indigo-200 bg-white p-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Recibida</p>
-              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.received }}</p>
-            </div>
-            <div class="rounded-full bg-indigo-100 p-2">
-              <svg class="h-4 w-4 text-indigo-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M20 13V6a2 2 0 00-2-2H6a2 2 0 00-2 2v7m16 0v5a2 2 0 01-2 2H6a2 2 0 01-2-2v-5m16 0h-2.586a1 1 0 00-.707.293l-2.414 2.414a1 1 0 01-.707.293h-3.172a1 1 0 01-.707-.293l-2.414-2.414A1 1 0 006.586 13H4" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Por Hacer -->
-        <div class="rounded-lg border border-gray-200 bg-white p-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Por Hacer</p>
-              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.todo }}</p>
-            </div>
-            <div class="rounded-full bg-gray-100 p-2">
-              <svg class="h-4 w-4 text-gray-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- En Progreso -->
-        <div class="rounded-lg border border-blue-200 bg-white p-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-secondary-600">En Progreso</p>
-              <p class="mt-1 text-2xl font-bold text-secondary-900">{{ stats.in_progress }}</p>
-            </div>
-            <div class="rounded-full bg-blue-100 p-2">
-              <svg class="h-4 w-4 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-
-        <!-- Bloqueada -->
-        <div class="rounded-lg border border-orange-200 bg-white p-3">
-          <div class="flex items-center justify-between">
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Bloqueada</p>
-              <p class="mt-1 text-2xl font-bold text-orange-600">{{ stats.blocked }}</p>
-            </div>
-            <div class="rounded-full bg-orange-100 p-2">
-              <svg class="h-4 w-4 text-orange-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-              </svg>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Secondary Stats -->
-      <div class="grid gap-3 grid-cols-2 sm:grid-cols-4">
-        <!-- Completada -->
-        <div class="rounded-lg border border-green-200 bg-white p-3">
-          <div class="flex items-center gap-2">
-            <div class="rounded-full bg-green-100 p-2">
-              <svg class="h-4 w-4 text-green-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Completada</p>
-              <p class="text-xl font-bold text-secondary-900">{{ stats.done }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Cancelada -->
-        <div class="rounded-lg border border-red-200 bg-white p-3">
-          <div class="flex items-center gap-2">
-            <div class="rounded-full bg-red-100 p-2">
-              <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 14l2-2m0 0l2-2m-2 2l-2-2m2 2l2 2m7-2a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Cancelada</p>
-              <p class="text-xl font-bold text-secondary-900">{{ stats.cancelled }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Archivada -->
-        <div class="rounded-lg border border-slate-200 bg-white p-3">
-          <div class="flex items-center gap-2">
-            <div class="rounded-full bg-slate-100 p-2">
-              <svg class="h-4 w-4 text-slate-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-medium text-secondary-600">Archivada</p>
-              <p class="text-xl font-bold text-secondary-900">{{ stats.archived }}</p>
-            </div>
-          </div>
-        </div>
-
-        <!-- Vencidas -->
-        <div class="rounded-lg border border-red-200 bg-red-50 p-3">
-          <div class="flex items-center gap-2">
-            <div class="rounded-full bg-red-100 p-2">
-              <svg class="h-4 w-4 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
-              </svg>
-            </div>
-            <div>
-              <p class="text-xs font-medium text-red-600">Vencidas</p>
-              <p class="text-xl font-bold text-red-600">{{ stats.overdue }}</p>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <!-- Filters -->
-      <div class="rounded-lg border border-secondary-200 bg-white p-4">
-        <div class="grid gap-4 sm:grid-cols-2 lg:grid-cols-4">
-          <div>
-            <label class="block text-sm font-medium text-secondary-700">Estado</label>
-            <select
-              v-model="form.status"
-              @change="applyFilters"
-              class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
+          <div v-if="!hasActiveFilters" class="mt-6">
+            <Link
+              :href="route('tasks.create')"
+              class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 dark:bg-primary-500 dark:hover:bg-primary-600"
             >
-              <option value="">Todos</option>
-              <option v-for="(label, value) in statuses" :key="value" :value="value">
-                {{ label }}
-              </option>
-            </select>
+              <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+              </svg>
+              Crear Tarea
+            </Link>
           </div>
-
-          <div>
-            <label class="block text-sm font-medium text-secondary-700">Prioridad</label>
-            <select
-              v-model="form.priority"
-              @change="applyFilters"
-              class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            >
-              <option value="">Todas</option>
-              <option v-for="(label, value) in priorities" :key="value" :value="value">
-                {{ label }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-secondary-700">Asignado a</label>
-            <select
-              v-model="form.assigned_to"
-              @change="applyFilters"
-              class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            >
-              <option value="">Todos</option>
-              <option value="me">Mis tareas</option>
-              <option v-for="user in users" :key="user.id" :value="user.id">
-                {{ user.name }}
-              </option>
-            </select>
-          </div>
-
-          <div>
-            <label class="block text-sm font-medium text-secondary-700">Buscar</label>
-            <input
-              v-model="form.search"
-              @input="debouncedSearch"
-              type="text"
-              placeholder="Buscar tareas..."
-              class="mt-1 block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-            />
-          </div>
-        </div>
-      </div>
-
-      <!-- Tasks Table -->
-      <div class="rounded-lg border border-secondary-200 bg-white shadow-sm">
-        <div class="overflow-x-auto">
-          <table class="min-w-full divide-y divide-secondary-200">
-            <thead class="bg-secondary-50">
-              <tr>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Tarea
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Estado
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Prioridad
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Asignado
-                </th>
-                <th class="px-6 py-3 text-left text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Vencimiento
-                </th>
-                <th class="px-6 py-3 text-right text-xs font-medium uppercase tracking-wider text-secondary-500">
-                  Acciones
-                </th>
-              </tr>
-            </thead>
-            <tbody class="divide-y divide-secondary-200 bg-white">
-              <tr v-for="task in tasks.data" :key="task.id" class="hover:bg-secondary-50">
-                <td class="px-6 py-4">
-                  <div class="flex items-center">
-                    <div>
-                      <div class="text-sm font-medium text-secondary-900">{{ task.title }}</div>
-                      <div class="text-sm text-secondary-500">{{ task.task_number }}</div>
-                    </div>
-                  </div>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-                    :class="{
-                      'bg-gray-100 text-gray-800': task.status_color === 'gray',
-                      'bg-blue-100 text-blue-800': task.status_color === 'blue',
-                      'bg-yellow-100 text-yellow-800': task.status_color === 'yellow',
-                      'bg-green-100 text-green-800': task.status_color === 'green',
-                      'bg-red-100 text-red-800': task.status_color === 'red',
-                    }"
-                  >
-                    {{ task.status_label }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap">
-                  <span
-                    class="inline-flex rounded-full px-2 py-1 text-xs font-semibold"
-                    :class="{
-                      'bg-gray-100 text-gray-800': task.priority_color === 'gray',
-                      'bg-blue-100 text-blue-800': task.priority_color === 'blue',
-                      'bg-orange-100 text-orange-800': task.priority_color === 'orange',
-                      'bg-red-100 text-red-800': task.priority_color === 'red',
-                    }"
-                  >
-                    {{ task.priority_label }}
-                  </span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm text-secondary-900">
-                  {{ task.assigned_to_name || 'Sin asignar' }}
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-sm">
-                  <span v-if="task.due_date" :class="{ 'text-red-600 font-semibold': task.is_overdue }">
-                    {{ formatDate(task.due_date) }}
-                  </span>
-                  <span v-else class="text-secondary-400">Sin fecha</span>
-                </td>
-                <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
-                  <Link
-                    :href="route('tasks.show', task.id)"
-                    class="text-primary-600 hover:text-primary-900"
-                  >
-                    Ver
-                  </Link>
-                </td>
-              </tr>
-            </tbody>
-          </table>
         </div>
 
         <!-- Pagination -->
-        <div v-if="tasks.data.length > 0" class="border-t border-secondary-200 bg-white px-4 py-3 sm:px-6">
-          <div class="flex items-center justify-between">
-            <div class="text-sm text-secondary-700">
-              Mostrando {{ tasks.from }} a {{ tasks.to }} de {{ tasks.total }} tareas
-            </div>
-            <div class="flex gap-2">
-              <template v-for="link in tasks.links" :key="link.label">
-                <Link
-                  v-if="link.url"
-                  :href="link.url"
-                  :class="[
-                    'px-3 py-2 text-sm rounded-md',
-                    link.active
-                      ? 'bg-primary-600 text-white'
-                      : 'bg-white text-secondary-700 hover:bg-secondary-50 border border-secondary-300'
-                  ]"
-                  v-html="link.label"
-                />
-                <span
-                  v-else
-                  :class="[
-                    'px-3 py-2 text-sm rounded-md',
-                    'bg-secondary-100 text-secondary-400 cursor-not-allowed border border-secondary-200'
-                  ]"
-                  v-html="link.label"
-                />
-              </template>
-            </div>
-          </div>
-        </div>
-
-        <div v-else class="px-6 py-12 text-center">
-          <svg class="mx-auto h-12 w-12 text-secondary-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2" />
-          </svg>
-          <h3 class="mt-2 text-sm font-medium text-secondary-900">No hay tareas</h3>
-          <p class="mt-1 text-sm text-secondary-500">Comienza creando una nueva tarea.</p>
+        <div v-if="tasks.data.length > 0" class="mt-6">
+          <Pagination :links="tasks.links" />
         </div>
       </div>
     </div>
-  </AppLayout>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, reactive } from 'vue'
-import { Link, router } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
+import { ref, computed, onMounted, onUnmounted } from 'vue'
+import { Head, Link, router } from '@inertiajs/vue3'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import TaskCard from '@/Components/TaskCard.vue'
+import Pagination from '@/Components/Pagination.vue'
 
 const props = defineProps({
   tasks: Object,
   filters: Object,
   statuses: Object,
   priorities: Object,
-  users: Array,
+  boards: Array,
   stats: Object,
 })
 
-const form = reactive({
-  status: props.filters.status || '',
-  priority: props.filters.priority || '',
-  assigned_to: props.filters.assigned_to || '',
-  search: props.filters.search || '',
+// Auto-refresh state
+const isRefreshing = ref(false)
+const refreshInterval = ref(null)
+const REFRESH_INTERVAL = 30000 // 30 segundos
+
+const filters = ref({
+  search: props.filters?.search || '',
+  status: props.filters?.status || '',
+  priority: props.filters?.priority || '',
+  board_id: props.filters?.board_id || '',
+  show_completed: props.filters?.show_completed || false,
+  show_overdue: props.filters?.show_overdue || false,
+  sort_by: props.filters?.sort_by || 'created_at',
+  sort_dir: props.filters?.sort_dir || 'desc',
+})
+
+const hasActiveFilters = computed(() => {
+  return (
+    filters.value.search !== '' ||
+    filters.value.status !== '' ||
+    filters.value.priority !== '' ||
+    filters.value.board_id !== '' ||
+    filters.value.show_completed ||
+    filters.value.show_overdue
+  )
 })
 
 const applyFilters = () => {
-  router.get(route('tasks.index'), form, {
+  router.get(route('tasks.index'), filters.value, {
     preserveState: true,
     preserveScroll: true,
   })
 }
 
-let searchTimeout = null
-const debouncedSearch = () => {
-  clearTimeout(searchTimeout)
-  searchTimeout = setTimeout(() => {
+let filterTimeout = null
+const debouncedFilter = () => {
+  if (filterTimeout) clearTimeout(filterTimeout)
+  filterTimeout = setTimeout(() => {
     applyFilters()
   }, 300)
 }
 
-const formatDate = (date) => {
-  return new Date(date).toLocaleDateString('es-ES', {
-    year: 'numeric',
-    month: 'short',
-    day: 'numeric'
+const clearFilters = () => {
+  filters.value = {
+    search: '',
+    status: '',
+    priority: '',
+    board_id: '',
+    show_completed: false,
+    show_overdue: false,
+    sort_by: 'created_at',
+    sort_dir: 'desc',
+  }
+  applyFilters()
+}
+
+// Auto-refresh functions
+const refreshTasks = () => {
+  if (isRefreshing.value) return
+
+  isRefreshing.value = true
+
+  router.reload({
+    preserveState: true,
+    preserveScroll: true,
+    only: ['tasks', 'stats'],
+    onFinish: () => {
+      isRefreshing.value = false
+    },
   })
 }
+
+const manualRefresh = () => {
+  refreshTasks()
+}
+
+const startAutoRefresh = () => {
+  refreshInterval.value = setInterval(() => {
+    if (!document.hidden) {
+      refreshTasks()
+    }
+  }, REFRESH_INTERVAL)
+}
+
+const stopAutoRefresh = () => {
+  if (refreshInterval.value) {
+    clearInterval(refreshInterval.value)
+    refreshInterval.value = null
+  }
+}
+
+// Lifecycle hooks
+onMounted(() => {
+  startAutoRefresh()
+
+  document.addEventListener('visibilitychange', () => {
+    if (document.hidden) {
+      stopAutoRefresh()
+    } else {
+      // Refresh inmediatamente al volver a la pestaña
+      refreshTasks()
+      startAutoRefresh()
+    }
+  })
+})
+
+onUnmounted(() => {
+  stopAutoRefresh()
+})
 </script>

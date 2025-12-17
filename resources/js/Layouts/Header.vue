@@ -1,10 +1,10 @@
 <template>
-  <header class="sticky top-0 z-50 h-16 flex items-center justify-between px-6 bg-white border-b border-secondary-200 shadow-sm backdrop-blur-sm bg-white/95">
+  <header class="sticky top-0 z-50 h-16 flex items-center justify-between px-6 border-b shadow-sm backdrop-blur-sm bg-white/95 border-secondary-200 dark:bg-secondary-900/95 dark:border-secondary-800 transition-colors">
     <!-- Logo - Extremo izquierdo -->
     <div class="flex items-center">
       <button
         @click="$emit('toggle-sidebar')"
-        class="flex items-center justify-center p-2 text-secondary-600 hover:bg-secondary-100 rounded-lg lg:hidden mr-2 transition-all duration-200 active:scale-95"
+        class="flex items-center justify-center p-2 text-secondary-600 hover:bg-secondary-100 rounded-lg lg:hidden mr-2 transition-all duration-200 active:scale-95 dark:text-secondary-300 dark:hover:bg-secondary-800"
         aria-label="Toggle menu"
       >
         <svg class="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -13,17 +13,20 @@
       </button>
 
       <Link :href="route('dashboard')" class="flex items-center group">
-        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 shadow-md shadow-primary-600/30">
+        <div class="flex h-9 w-9 items-center justify-center rounded-lg bg-gradient-to-br from-primary-600 to-primary-500 shadow-md shadow-primary-600/30 dark:shadow-primary-500/20">
           <svg class="h-5 w-5 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
           </svg>
         </div>
-        <span class="ml-3 text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent">HelpTech</span>
+        <span class="ml-3 text-xl font-bold bg-gradient-to-r from-primary-600 to-primary-500 bg-clip-text text-transparent dark:from-primary-400 dark:to-primary-300">HelpTech</span>
       </Link>
     </div>
 
     <!-- Usuario - Extremo derecho -->
-    <div class="flex items-center gap-4">
+    <div class="flex items-center gap-2">
+        <!-- Theme Toggle -->
+        <ThemeToggle />
+
         <!-- Notificaciones -->
         <div class="relative" ref="notificationDropdown">
           <button
@@ -245,6 +248,7 @@
 import { computed, ref, onMounted, onUnmounted } from 'vue';
 import { usePage, router, Link } from '@inertiajs/vue3';
 import axios from 'axios';
+import ThemeToggle from '@/Components/ThemeToggle.vue';
 
 defineEmits(['toggle-sidebar']);
 

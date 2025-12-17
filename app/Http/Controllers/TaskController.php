@@ -2,31 +2,48 @@
 
 namespace App\Http\Controllers;
 
-use App\Enums\TaskStatus;
 use App\Models\Task;
-use App\Models\User;
+use App\Models\Board;
+use App\Enums\TaskStatus;
+use App\Enums\TaskPriority;
+use App\Services\TaskTimeService;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 
 class TaskController extends Controller
 {
+    protected TaskTimeService $timeService;
+
+    public function __construct(TaskTimeService $timeService)
+    {
+        $this->timeService = $timeService;
+    }
+
     /**
      * Display a listing of tasks.
      */
     public function index(Request $request)
     {
-        $user = auth()->user();
-        $query = Task::with(['creator', 'assignedUser']);
+        $this->authorize('viewAny', Task::class);
 
-        // Filtrar tareas según el rol del usuario
-        if (!$user->isAdmin()) {
-            // Usuarios normales: ven sus tareas creadas + tareas asignadas a ellos
-            $query->where(function ($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhere('assigned_to', $user->id);
+        $user = auth()->user();
+        $query = Task::with(['board.user', 'subTasks']);
+
+        // Filtrar tareas según el tipo de usuario
+        if ($user->isAdmin()) {
+            // Administradores: ven tareas de sus tableros + tareas de tableros de usuarios tech
+            $query->whereHas('board', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('user', function ($q) {
+                      $q->where('tipo_usuario', 'tech');
+                  });
+            });
+        } else {
+            // Usuarios normales/tech: solo ven tareas de sus tableros
+            $query->whereHas('board', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
             });
         }
-        // Admin: ve todas las tareas (no aplica filtro)
 
         // Filtros
         if ($request->filled('status')) {
@@ -37,43 +54,27 @@ class TaskController extends Controller
             $query->byPriority($request->priority);
         }
 
-        if ($request->filled('assigned_to')) {
-            $assignedTo = $request->assigned_to === 'me' ? auth()->id() : $request->assigned_to;
-            $query->assignedTo($assignedTo);
-        }
-
-        if ($request->filled('created_by')) {
-            $createdBy = $request->created_by === 'me' ? auth()->id() : $request->created_by;
-            $query->createdBy($createdBy);
+        if ($request->filled('board_id')) {
+            $query->byBoard($request->board_id);
         }
 
         if ($request->filled('search')) {
             $search = $request->search;
             $query->where(function ($q) use ($search) {
-                $q->where('task_number', 'like', "%{$search}%")
-                    ->orWhere('title', 'like', "%{$search}%")
+                $q->where('title', 'like', "%{$search}%")
                     ->orWhere('description', 'like', "%{$search}%");
             });
         }
 
         // Filtro de tareas vencidas
-        $showOverdue = $request->boolean('show_overdue');
-        if ($showOverdue) {
+        if ($request->boolean('show_overdue')) {
             $query->overdue();
         }
 
-        // Filtro de tareas activas/completadas
-        $showCompleted = $request->boolean('show_completed');
+        // Filtro de tareas activas
         if (!$request->filled('status')) {
-            if ($request->filled('show_completed')) {
-                if (!$showCompleted) {
-                    $query->active();
-                }
-            } else {
-                // Por defecto, mostrar solo tareas activas
-                if (!$showOverdue) {
-                    $query->active();
-                }
+            if (!$request->boolean('show_completed')) {
+                $query->active();
             }
         }
 
@@ -81,15 +82,7 @@ class TaskController extends Controller
         $sortBy = $request->get('sort_by', 'created_at');
         $sortDir = $request->get('sort_dir', 'desc');
 
-        $allowedSortColumns = [
-            'task_number',
-            'title',
-            'status',
-            'priority',
-            'due_date',
-            'created_at',
-            'updated_at',
-        ];
+        $allowedSortColumns = ['title', 'status', 'priority', 'created_at', 'progress'];
 
         if (in_array($sortBy, $allowedSortColumns)) {
             $query->orderBy($sortBy, $sortDir);
@@ -99,88 +92,76 @@ class TaskController extends Controller
 
         $tasks = $query->paginate(15)->withQueryString();
 
-        // Calcular estadísticas según los permisos del usuario
+        // Obtener estadísticas
         $statsQuery = Task::query();
-        if (!$user->isAdmin()) {
-            $statsQuery->where(function ($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhere('assigned_to', $user->id);
+        if ($user->isAdmin()) {
+            // Administradores: estadísticas de sus tareas + tareas de usuarios tech
+            $statsQuery->whereHas('board', function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('user', function ($q) {
+                      $q->where('tipo_usuario', 'tech');
+                  });
             });
+        } else {
+            // Usuarios normales/tech: solo estadísticas de sus tareas
+            $statsQuery->whereHas('board', function ($q) use ($user) {
+                $q->where('user_id', $user->id);
+            });
+        }
+
+        // Obtener tableros para el filtro
+        $boards = Board::query();
+        if ($user->isAdmin()) {
+            // Administradores: sus tableros + tableros de usuarios tech
+            $boards->where(function ($q) use ($user) {
+                $q->where('user_id', $user->id)
+                  ->orWhereHas('user', function ($q) {
+                      $q->where('tipo_usuario', 'tech');
+                  });
+            });
+        } else {
+            // Usuarios normales/tech: solo sus tableros
+            $boards->where('user_id', $user->id);
         }
 
         return Inertia::render('Tasks/Index', [
             'tasks' => $tasks,
-            'filters' => $request->only(['status', 'priority', 'assigned_to', 'created_by', 'search', 'show_completed', 'show_overdue', 'sort_by', 'sort_dir']),
+            'filters' => $request->only(['status', 'priority', 'board_id', 'search', 'show_completed', 'show_overdue', 'sort_by', 'sort_dir']),
             'statuses' => Task::getStatuses(),
             'priorities' => Task::getPriorities(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
+            'boards' => $boards->orderBy('name')->get(['id', 'name']),
             'stats' => [
-                'received' => (clone $statsQuery)->received()->count(),
-                'todo' => (clone $statsQuery)->todo()->count(),
-                'in_progress' => (clone $statsQuery)->inProgress()->count(),
-                'blocked' => (clone $statsQuery)->blocked()->count(),
-                'done' => (clone $statsQuery)->done()->count(),
-                'cancelled' => (clone $statsQuery)->cancelled()->count(),
-                'archived' => (clone $statsQuery)->archived()->count(),
+                'creada' => (clone $statsQuery)->byStatus('creada')->count(),
+                'analizada' => (clone $statsQuery)->byStatus('analizada')->count(),
+                'programada' => (clone $statsQuery)->byStatus('programada')->count(),
+                'en_progreso' => (clone $statsQuery)->byStatus('en_progreso')->count(),
+                'finalizada' => (clone $statsQuery)->byStatus('finalizada')->count(),
+                'cancelada' => (clone $statsQuery)->byStatus('cancelada')->count(),
                 'overdue' => (clone $statsQuery)->overdue()->count(),
             ],
         ]);
     }
 
     /**
-     * Display tasks in a board view (Kanban style).
-     */
-    public function board(Request $request)
-    {
-        $user = auth()->user();
-        $query = Task::with(['creator', 'assignedUser']);
-
-        // Filtrar tareas según el rol del usuario
-        if (!$user->isAdmin()) {
-            $query->where(function ($q) use ($user) {
-                $q->where('created_by', $user->id)
-                  ->orWhere('assigned_to', $user->id);
-            });
-        }
-
-        // Filtros aplicables
-        if ($request->filled('assigned_to')) {
-            $assignedTo = $request->assigned_to === 'me' ? auth()->id() : $request->assigned_to;
-            $query->assignedTo($assignedTo);
-        }
-
-        if ($request->filled('priority')) {
-            $query->byPriority($request->priority);
-        }
-
-        // Obtener tareas activas agrupadas por estado
-        $tasks = $query->active()->orderBy('position', 'asc')->get()->groupBy(function ($task) {
-            return is_string($task->status) ? $task->status : $task->status->value;
-        });
-
-        return Inertia::render('Tasks/Board', [
-            'tasks' => [
-                'received' => $tasks->get(TaskStatus::RECEIVED->value, collect())->values(),
-                'todo' => $tasks->get(TaskStatus::TODO->value, collect())->values(),
-                'in_progress' => $tasks->get(TaskStatus::IN_PROGRESS->value, collect())->values(),
-                'blocked' => $tasks->get(TaskStatus::BLOCKED->value, collect())->values(),
-            ],
-            'filters' => $request->only(['assigned_to', 'priority']),
-            'statuses' => Task::getStatuses(),
-            'priorities' => Task::getPriorities(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
-        ]);
-    }
-
-    /**
      * Show the form for creating a new task.
      */
-    public function create()
+    public function create(Request $request)
     {
+        $this->authorize('create', Task::class);
+
+        // Requiere board_id en la URL
+        $request->validate([
+            'board_id' => 'required|exists:boards,id',
+        ]);
+
+        $board = Board::with('user')->findOrFail($request->board_id);
+
+        // Verificar que el usuario tiene acceso al tablero
+        $this->authorize('view', $board);
+
         return Inertia::render('Tasks/Create', [
             'priorities' => Task::getPriorities(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
-            'empresas' => Task::getEmpresas(),
+            'board' => $board,
         ]);
     }
 
@@ -189,44 +170,22 @@ class TaskController extends Controller
      */
     public function store(Request $request)
     {
+        $this->authorize('create', Task::class);
+
         $validated = $request->validate([
+            'board_id' => 'required|exists:boards,id',
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'required|in:' . implode(',', array_keys(Task::getPriorities())),
-            'assigned_to' => 'nullable|exists:users,id',
-            'due_date' => 'nullable|date',
-            'empresa' => 'nullable|string|in:' . implode(',', Task::getEmpresas()),
-            'sucursal' => 'nullable|string|max:255',
-            'department' => 'nullable|string|max:255',
-            'labels' => 'nullable|array',
         ]);
 
-        $task = Task::create([
-            ...$validated,
-            'created_by' => auth()->id(),
-            'status' => Task::STATUS_RECEIVED,
-        ]);
+        // Verificar que el usuario tiene acceso al tablero
+        $board = Board::findOrFail($validated['board_id']);
+        $this->authorize('view', $board);
 
-        // Si se asigna directamente
-        if (!empty($validated['assigned_to'])) {
-            $assignedUser = User::find($validated['assigned_to']);
-            $task->assignTo($assignedUser);
+        $task = Task::create($validated);
 
-            // Notificar asignación
-            \App\Models\Notification::create([
-                'user_id' => $assignedUser->id,
-                'type' => 'task_assigned',
-                'title' => 'Tarea asignada',
-                'message' => "Se te ha asignado la tarea: {$task->title}",
-                'data' => [
-                    'task_id' => $task->id,
-                    'task_number' => $task->task_number,
-                    'assigned_by' => auth()->user()->name,
-                ],
-            ]);
-        }
-
-        return redirect()->route('tasks.show', $task)
+        return redirect()->route('boards.show', $board->id)
             ->with('success', 'Tarea creada exitosamente.');
     }
 
@@ -237,22 +196,12 @@ class TaskController extends Controller
     {
         $this->authorize('view', $task);
 
-        $task->load([
-            'creator',
-            'assignedUser',
-            'comments' => function ($query) {
-                $query->with('user')->orderBy('created_at', 'asc');
-            },
-        ]);
-
-        $user = auth()->user();
+        $task->load(['board.user', 'subTasks']);
 
         return Inertia::render('Tasks/Show', [
             'task' => $task,
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
             'statuses' => Task::getStatuses(),
             'priorities' => Task::getPriorities(),
-            'canEdit' => $user->can('update', $task),
         ]);
     }
 
@@ -263,10 +212,11 @@ class TaskController extends Controller
     {
         $this->authorize('update', $task);
 
+        $task->load('board.user');
+
         return Inertia::render('Tasks/Edit', [
             'task' => $task,
             'priorities' => Task::getPriorities(),
-            'users' => User::active()->orderBy('name')->get(['id', 'name']),
         ]);
     }
 
@@ -281,14 +231,26 @@ class TaskController extends Controller
             'title' => 'required|string|max:255',
             'description' => 'nullable|string',
             'priority' => 'required|in:' . implode(',', array_keys(Task::getPriorities())),
-            'due_date' => 'nullable|date',
-            'labels' => 'nullable|array',
         ]);
 
         $task->update($validated);
 
-        return redirect()->route('tasks.show', $task)
+        return redirect()->route('boards.show', $task->board_id)
             ->with('success', 'Tarea actualizada exitosamente.');
+    }
+
+    /**
+     * Remove the specified task.
+     */
+    public function destroy(Task $task)
+    {
+        $this->authorize('delete', $task);
+
+        $boardId = $task->board_id;
+        $task->delete();
+
+        return redirect()->route('boards.show', $boardId)
+            ->with('success', 'Tarea eliminada exitosamente.');
     }
 
     /**
@@ -300,42 +262,14 @@ class TaskController extends Controller
 
         $validated = $request->validate([
             'status' => 'required|in:' . implode(',', array_keys(Task::getStatuses())),
+            'cancel_reason' => 'required_if:status,cancelada|nullable|string',
         ]);
 
-        $oldStatus = $task->status;
-        $newStatus = $validated['status'];
-
-        if ($oldStatus === $newStatus) {
-            return back()->with('info', 'La tarea ya tiene ese estado.');
-        }
-
-        $oldStatusLabel = $task->status_label;
-
         try {
-            $task->update(['status' => $newStatus]);
-
-            // Agregar comentario automático del cambio de estado
-            $task->addComment(
-                "Estado cambiado de '{$oldStatusLabel}' a '{$task->status_label}'",
-                'status_change'
+            $task->changeStatus(
+                TaskStatus::from($validated['status']),
+                $validated['cancel_reason'] ?? null
             );
-
-            // Notificar cambio de estado
-            $notifyUserId = $task->assigned_to ?? $task->created_by;
-            if ($notifyUserId && $notifyUserId !== auth()->id()) {
-                \App\Models\Notification::create([
-                    'user_id' => $notifyUserId,
-                    'type' => 'task_status_changed',
-                    'title' => 'Estado de tarea actualizado',
-                    'message' => "La tarea '{$task->title}' cambió a: {$task->status_label}",
-                    'data' => [
-                        'task_id' => $task->id,
-                        'task_number' => $task->task_number,
-                        'old_status' => $oldStatusLabel,
-                        'new_status' => $task->status_label,
-                    ],
-                ]);
-            }
 
             return back()->with('success', 'Estado actualizado exitosamente.');
         } catch (\InvalidArgumentException $e) {
@@ -344,245 +278,23 @@ class TaskController extends Controller
     }
 
     /**
-     * Assign task to a user.
-     */
-    public function assign(Request $request, Task $task)
-    {
-        $this->authorize('assign', $task);
-
-        $validated = $request->validate([
-            'assigned_to' => 'required|exists:users,id',
-        ]);
-
-        $oldAssignee = $task->assigned_to ? User::find($task->assigned_to) : null;
-        $newAssignee = User::find($validated['assigned_to']);
-
-        if ($oldAssignee && $oldAssignee->id === $newAssignee->id) {
-            return back()->with('info', "La tarea ya está asignada a {$newAssignee->name}.");
-        }
-
-        $task->assignTo($newAssignee);
-
-        // Notificar al nuevo asignado
-        \App\Models\Notification::create([
-            'user_id' => $newAssignee->id,
-            'type' => 'task_assigned',
-            'title' => 'Tarea asignada',
-            'message' => "Se te ha asignado la tarea: {$task->title}",
-            'data' => [
-                'task_id' => $task->id,
-                'task_number' => $task->task_number,
-                'assigned_by' => auth()->user()->name,
-            ],
-        ]);
-
-        return back()->with('success', "Tarea asignada a {$newAssignee->name}.");
-    }
-
-    /**
-     * Add comment to task.
-     */
-    public function addComment(Request $request, Task $task)
-    {
-        $this->authorize('addComment', $task);
-
-        $validated = $request->validate([
-            'comment' => 'required|string',
-        ]);
-
-        $task->addComment($validated['comment']);
-
-        // Notificar nuevo comentario
-        $notifyUserId = ($task->assigned_to !== auth()->id()) ? $task->assigned_to : $task->created_by;
-        if ($notifyUserId && $notifyUserId !== auth()->id()) {
-            \App\Models\Notification::create([
-                'user_id' => $notifyUserId,
-                'type' => 'task_commented',
-                'title' => 'Nuevo comentario en tarea',
-                'message' => auth()->user()->name . " comentó en: {$task->title}",
-                'data' => [
-                    'task_id' => $task->id,
-                    'task_number' => $task->task_number,
-                    'commented_by' => auth()->user()->name,
-                ],
-            ]);
-        }
-
-        return back()->with('success', 'Comentario agregado exitosamente.');
-    }
-
-    /**
-     * Remove the specified task.
-     */
-    public function destroy(Task $task)
-    {
-        $this->authorize('delete', $task);
-
-        $task->delete();
-
-        return redirect()->route('tasks.index')
-            ->with('success', 'Tarea eliminada exitosamente.');
-    }
-
-    /**
-     * Update task position (for Kanban board drag & drop).
-     */
-    public function updatePosition(Request $request, Task $task)
-    {
-        $validated = $request->validate([
-            'position' => 'required|integer|min:0',
-            'status' => 'required|in:' . implode(',', array_keys(Task::getStatuses())),
-        ]);
-
-        $oldStatusValue = is_string($task->status) ? $task->status : $task->status->value;
-        $newStatusValue = $validated['status'];
-
-        // Guardar el label del estado anterior antes de actualizar
-        $oldStatusLabel = $task->status_label;
-
-        try {
-            $task->update([
-                'position' => $validated['position'],
-                'status' => $validated['status'],
-            ]);
-
-            // Si el estado cambió, agregar comentario automático
-            if ($oldStatusValue !== $newStatusValue) {
-                // Refrescar el modelo para obtener el nuevo label
-                $task->refresh();
-                $newStatusLabel = $task->status_label;
-
-                $task->addComment(
-                    "Estado cambiado de '{$oldStatusLabel}' a '{$newStatusLabel}' (tablero Kanban)",
-                    'status_change'
-                );
-
-                // Notificar cambio de estado
-                $notifyUserId = $task->assigned_to ?? $task->created_by;
-                if ($notifyUserId && $notifyUserId !== auth()->id()) {
-                    \App\Models\Notification::create([
-                        'user_id' => $notifyUserId,
-                        'type' => 'task_status_changed',
-                        'title' => 'Estado de tarea actualizado',
-                        'message' => "La tarea '{$task->title}' cambió a: {$newStatusLabel}",
-                        'data' => [
-                            'task_id' => $task->id,
-                            'task_number' => $task->task_number,
-                            'old_status' => $oldStatusLabel,
-                            'new_status' => $newStatusLabel,
-                        ],
-                    ]);
-                }
-            }
-
-            return back();
-        } catch (\InvalidArgumentException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Block a task with a reason.
-     */
-    public function block(Request $request, Task $task)
-    {
-        $this->authorize('updateStatus', $task);
-
-        $validated = $request->validate([
-            'blocked_reason' => 'required|string|max:1000',
-        ]);
-
-        try {
-            $task->markAsBlocked($validated['blocked_reason']);
-
-            // Notificar cambio de estado
-            $notifyUserId = $task->assigned_to ?? $task->created_by;
-            if ($notifyUserId && $notifyUserId !== auth()->id()) {
-                \App\Models\Notification::create([
-                    'user_id' => $notifyUserId,
-                    'type' => 'task_blocked',
-                    'title' => 'Tarea bloqueada',
-                    'message' => "La tarea '{$task->title}' ha sido bloqueada: {$validated['blocked_reason']}",
-                    'data' => [
-                        'task_id' => $task->id,
-                        'task_number' => $task->task_number,
-                        'blocked_by' => auth()->user()->name,
-                        'reason' => $validated['blocked_reason'],
-                    ],
-                ]);
-            }
-
-            return back()->with('success', 'Tarea bloqueada exitosamente.');
-        } catch (\InvalidArgumentException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Unblock a task.
-     */
-    public function unblock(Task $task)
-    {
-        $this->authorize('updateStatus', $task);
-
-        try {
-            $task->unblock();
-
-            // Notificar cambio de estado
-            $notifyUserId = $task->assigned_to ?? $task->created_by;
-            if ($notifyUserId && $notifyUserId !== auth()->id()) {
-                \App\Models\Notification::create([
-                    'user_id' => $notifyUserId,
-                    'type' => 'task_unblocked',
-                    'title' => 'Tarea desbloqueada',
-                    'message' => "La tarea '{$task->title}' ha sido desbloqueada",
-                    'data' => [
-                        'task_id' => $task->id,
-                        'task_number' => $task->task_number,
-                        'unblocked_by' => auth()->user()->name,
-                    ],
-                ]);
-            }
-
-            return back()->with('success', 'Tarea desbloqueada exitosamente.');
-        } catch (\InvalidArgumentException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Archive a task.
-     */
-    public function archive(Task $task)
-    {
-        $this->authorize('updateStatus', $task);
-
-        try {
-            $task->markAsArchived();
-
-            return back()->with('success', 'Tarea archivada exitosamente.');
-        } catch (\InvalidArgumentException $e) {
-            return back()->with('error', $e->getMessage());
-        }
-    }
-
-    /**
-     * Get allowed transitions for a task status.
+     * Get allowed transitions for a task.
      */
     public function getAllowedTransitions(Task $task)
     {
         $this->authorize('view', $task);
 
-        $currentStatus = is_string($task->status) ? TaskStatus::from($task->status) : $task->status;
-
+        $currentStatus = $task->status;
         $allowedTransitions = [];
-        foreach ($currentStatus->getAllowedTransitions() as $transition) {
-            $allowedTransitions[] = [
-                'value' => $transition->value,
-                'label' => $transition->label(),
-                'color' => $transition->color(),
-                'requires_confirmation' => $currentStatus->requiresConfirmation($transition),
-            ];
+
+        foreach (TaskStatus::cases() as $status) {
+            if ($currentStatus->canTransitionTo($status)) {
+                $allowedTransitions[] = [
+                    'value' => $status->value,
+                    'label' => $status->label(),
+                    'color' => $status->color(),
+                ];
+            }
         }
 
         return response()->json([
@@ -591,6 +303,7 @@ class TaskController extends Controller
                 'label' => $currentStatus->label(),
             ],
             'allowed_transitions' => $allowedTransitions,
+            'can_be_finalized' => $task->can_be_finalized,
         ]);
     }
 }

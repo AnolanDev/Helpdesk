@@ -3,7 +3,9 @@
 use App\Http\Controllers\DashboardController;
 use App\Http\Controllers\ProfileController;
 use App\Http\Controllers\TicketController;
+use App\Http\Controllers\BoardController;
 use App\Http\Controllers\TaskController;
+use App\Http\Controllers\SubTaskController;
 use App\Http\Controllers\UserController;
 use App\Http\Controllers\UserImportController;
 use App\Http\Controllers\NotificationController;
@@ -42,19 +44,28 @@ Route::middleware('auth')->group(function () {
     Route::patch('/tickets/{ticket}/reopen', [TicketController::class, 'reopen'])->name('tickets.reopen');
     Route::get('/tickets/{ticket}/export-activities', [TicketController::class, 'exportActivities'])->name('tickets.export-activities');
 
+    // Boards Routes
+    Route::resource('boards', BoardController::class);
+
+    // Board Sharing Routes
+    Route::get('/boards/{board}/available-users', [BoardController::class, 'getAvailableUsers'])->name('boards.available-users');
+    Route::post('/boards/{board}/share', [BoardController::class, 'share'])->name('boards.share');
+    Route::patch('/boards/{board}/share/{sharedUser}', [BoardController::class, 'updateShare'])->name('boards.update-share');
+    Route::delete('/boards/{board}/share/{sharedUser}', [BoardController::class, 'unshare'])->name('boards.unshare');
+
     // Tasks Routes
-    Route::get('/tasks/board', [TaskController::class, 'board'])->name('tasks.board');
     Route::resource('tasks', TaskController::class);
 
     // Task Actions
     Route::patch('/tasks/{task}/status', [TaskController::class, 'updateStatus'])->name('tasks.status');
-    Route::patch('/tasks/{task}/assign', [TaskController::class, 'assign'])->name('tasks.assign');
-    Route::post('/tasks/{task}/comments', [TaskController::class, 'addComment'])->name('tasks.comments');
-    Route::patch('/tasks/{task}/position', [TaskController::class, 'updatePosition'])->name('tasks.position');
-    Route::patch('/tasks/{task}/block', [TaskController::class, 'block'])->name('tasks.block');
-    Route::patch('/tasks/{task}/unblock', [TaskController::class, 'unblock'])->name('tasks.unblock');
-    Route::patch('/tasks/{task}/archive', [TaskController::class, 'archive'])->name('tasks.archive');
     Route::get('/tasks/{task}/transitions', [TaskController::class, 'getAllowedTransitions'])->name('tasks.transitions');
+
+    // Sub-Tasks Routes
+    Route::post('/tasks/{task}/sub-tasks', [SubTaskController::class, 'store'])->name('sub-tasks.store');
+    Route::patch('/sub-tasks/{subTask}', [SubTaskController::class, 'update'])->name('sub-tasks.update');
+    Route::patch('/sub-tasks/{subTask}/toggle', [SubTaskController::class, 'toggleStatus'])->name('sub-tasks.toggle');
+    Route::delete('/sub-tasks/{subTask}', [SubTaskController::class, 'destroy'])->name('sub-tasks.destroy');
+    Route::patch('/tasks/{task}/sub-tasks/order', [SubTaskController::class, 'updateOrder'])->name('sub-tasks.order');
 
     // Users Routes
     Route::resource('users', UserController::class);

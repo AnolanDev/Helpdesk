@@ -356,19 +356,15 @@ const menuItems = {
       name: 'Mis Tickets',
       href: '/tickets?assigned_to=me',
       iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-6 9l2 2 4-4'
-    },
+    }
+  ],
+  gestion: [
     {
-      name: 'Mis Tareas',
-      href: '/tasks',
-      iconPath: 'M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2'
-    },
-    {
-      name: 'Tablero Kanban',
-      href: '/tasks/board',
+      name: 'Tableros',
+      href: '/boards',
       iconPath: 'M9 17V7m0 10a2 2 0 01-2 2H5a2 2 0 01-2-2V7a2 2 0 012-2h2a2 2 0 012 2m0 10a2 2 0 002 2h2a2 2 0 002-2M9 7a2 2 0 012-2h2a2 2 0 012 2m0 10V7m0 10a2 2 0 002 2h2a2 2 0 002-2V7a2 2 0 00-2-2h-2a2 2 0 00-2 2'
     }
   ],
-  gestion: [],
   administracion: [
     {
       name: 'Usuarios',

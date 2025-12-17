@@ -4,9 +4,14 @@ namespace App\Providers;
 
 use App\Models\Ticket;
 use App\Models\User;
+use App\Models\Task;
+use App\Models\Board;
 use App\Policies\TicketPolicy;
 use App\Policies\UserPolicy;
+use App\Policies\TaskPolicy;
+use App\Policies\BoardPolicy;
 use App\Services\Glpi\GlpiService;
+use App\Observers\TaskObserver;
 use Illuminate\Support\Facades\Gate;
 use Illuminate\Support\Facades\Vite;
 use Illuminate\Support\ServiceProvider;
@@ -37,5 +42,10 @@ class AppServiceProvider extends ServiceProvider
         // Registrar policies manualmente
         Gate::policy(Ticket::class, TicketPolicy::class);
         Gate::policy(User::class, UserPolicy::class);
+        Gate::policy(Task::class, TaskPolicy::class);
+        Gate::policy(Board::class, BoardPolicy::class);
+
+        // Registrar observers
+        Task::observe(TaskObserver::class);
     }
 }

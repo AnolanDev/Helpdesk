@@ -4,12 +4,14 @@ namespace App\Policies;
 
 use App\Models\Task;
 use App\Models\User;
-use Illuminate\Auth\Access\Response;
+use Illuminate\Auth\Access\HandlesAuthorization;
 
 class TaskPolicy
 {
+    use HandlesAuthorization;
+
     /**
-     * Determine whether the user can view any models.
+     * Determine if the user can view any tasks.
      */
     public function viewAny(User $user): bool
     {
@@ -18,113 +20,119 @@ class TaskPolicy
     }
 
     /**
-     * Determine whether the user can view the model.
+     * Determine if the user can view the task.
      */
     public function view(User $user, Task $task): bool
     {
-        // Admin puede ver cualquier tarea
-        if ($user->isAdmin()) {
+        // El usuario puede ver la tarea si:
+        // 1. Es el dueño del tablero al que pertenece
+        // 2. El tablero está compartido con él (con cualquier permiso)
+        // 3. Es administrador y el tablero pertenece a un usuario tech
+        if ($user->id === $task->board->user_id) {
             return true;
         }
 
-        // El usuario puede ver si es el creador o el asignado
-        return $task->created_by === $user->id || $task->assigned_to === $user->id;
+        // Verificar si el tablero está compartido con el usuario
+        if ($task->board->isSharedWith($user)) {
+            return true;
+        }
+
+        if ($user->isAdmin()) {
+            // Los admins pueden ver tareas de tableros de usuarios tech
+            return $task->board->user->isTech();
+        }
+
+        return false;
     }
 
     /**
-     * Determine whether the user can create models.
+     * Determine if the user can create tasks.
      */
     public function create(User $user): bool
     {
-        // Todos los usuarios autenticados pueden crear tareas
-        return true;
+        // Todos los usuarios activos pueden crear tareas
+        return $user->is_active ?? true;
     }
 
     /**
-     * Determine whether the user can update the model.
+     * Determine if the user can update the task.
      */
     public function update(User $user, Task $task): bool
     {
-        // Admin puede actualizar cualquier tarea
-        if ($user->isAdmin()) {
+        // El usuario puede editar la tarea si:
+        // 1. Es el dueño del tablero
+        // 2. El tablero está compartido con él con permisos de escritura
+        // Los administradores NO pueden editar tareas de otros
+        if ($user->id === $task->board->user_id) {
             return true;
         }
 
-        // Solo el creador puede actualizar la tarea
-        return $task->created_by === $user->id;
+        return $task->board->hasWritePermission($user);
     }
 
     /**
-     * Determine whether the user can delete the model.
+     * Determine if the user can delete the task.
      */
     public function delete(User $user, Task $task): bool
     {
-        // Admin puede eliminar cualquier tarea
-        if ($user->isAdmin()) {
+        // El usuario puede eliminar la tarea si:
+        // 1. Es el dueño del tablero
+        // 2. El tablero está compartido con él con permisos de escritura
+        // Los administradores NO pueden eliminar tareas de otros
+        if ($user->id === $task->board->user_id) {
             return true;
         }
 
-        // Solo el creador puede eliminar la tarea
-        return $task->created_by === $user->id;
+        return $task->board->hasWritePermission($user);
     }
 
     /**
-     * Determine whether the user can update the status.
-     */
-    public function updateStatus(User $user, Task $task): bool
-    {
-        // Admin puede cambiar el estado de cualquier tarea
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // El creador y el asignado pueden cambiar el estado
-        return $task->created_by === $user->id || $task->assigned_to === $user->id;
-    }
-
-    /**
-     * Determine whether the user can assign the task.
-     */
-    public function assign(User $user, Task $task): bool
-    {
-        // Admin puede asignar cualquier tarea
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // Solo el creador puede asignar la tarea
-        return $task->created_by === $user->id;
-    }
-
-    /**
-     * Determine whether the user can add comments.
-     */
-    public function addComment(User $user, Task $task): bool
-    {
-        // Admin puede comentar en cualquier tarea
-        if ($user->isAdmin()) {
-            return true;
-        }
-
-        // El creador y el asignado pueden comentar
-        return $task->created_by === $user->id || $task->assigned_to === $user->id;
-    }
-
-    /**
-     * Determine whether the user can restore the model.
+     * Determine if the user can restore the task.
      */
     public function restore(User $user, Task $task): bool
     {
-        // Solo admin puede restaurar tareas eliminadas
-        return $user->isAdmin();
+        // Solo el dueño del tablero puede restaurar
+        return $user->id === $task->board->user_id;
     }
 
     /**
-     * Determine whether the user can permanently delete the model.
+     * Determine if the user can permanently delete the task.
      */
     public function forceDelete(User $user, Task $task): bool
     {
-        // Solo admin puede eliminar permanentemente
-        return $user->isAdmin();
+        // Solo el dueño puede eliminar permanentemente
+        return $user->id === $task->board->user_id;
+    }
+
+    /**
+     * Determine if the user can update the task status.
+     */
+    public function updateStatus(User $user, Task $task): bool
+    {
+        // El usuario puede cambiar el estado si:
+        // 1. Es el dueño del tablero
+        // 2. El tablero está compartido con él con permisos de escritura
+        // Los administradores NO pueden cambiar estados de tareas de otros
+        if ($user->id === $task->board->user_id) {
+            return true;
+        }
+
+        return $task->board->hasWritePermission($user);
+    }
+
+    /**
+     * Determine if the user can manage sub-tasks.
+     */
+    public function manageSubTasks(User $user, Task $task): bool
+    {
+        // El usuario puede gestionar sub-tareas si:
+        // 1. Es el dueño del tablero
+        // 2. El tablero está compartido con él con permisos de escritura
+        // Los administradores NO pueden gestionar sub-tareas de otros
+        if ($user->id === $task->board->user_id) {
+            return true;
+        }
+
+        return $task->board->hasWritePermission($user);
     }
 }

@@ -1,5 +1,5 @@
 <template>
-  <div class="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-secondary-50/30">
+  <div class="min-h-screen bg-gradient-to-br from-secondary-50 via-white to-secondary-50/30 transition-colors dark:from-secondary-950 dark:via-secondary-900 dark:to-secondary-950/30">
     <!-- Loading Indicator -->
     <LoadingIndicator />
 

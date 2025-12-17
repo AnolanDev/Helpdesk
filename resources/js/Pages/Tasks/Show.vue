@@ -1,440 +1,451 @@
 <template>
-  <AppLayout>
-    <div class="mx-auto max-w-5xl space-y-6">
-      <!-- Header -->
+  <Head :title="task.title" />
+
+  <AuthenticatedLayout>
+    <template #header>
       <div class="flex items-center justify-between">
-        <div class="flex items-center gap-3">
+        <div class="flex items-center gap-4">
           <Link
-            :href="route('tasks.index')"
-            class="rounded-lg p-2 text-secondary-600 transition-all hover:bg-secondary-100"
+            :href="route('boards.show', task.board.id)"
+            class="text-secondary-600 hover:text-secondary-900 dark:text-secondary-400 dark:hover:text-secondary-100"
           >
-            <svg class="h-5 w-5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+            <svg class="h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 19l-7-7 7-7"></path>
             </svg>
           </Link>
           <div>
-            <h1 class="text-2xl font-bold text-secondary-900">{{ task.title }}</h1>
-            <p class="text-sm text-secondary-600">{{ task.task_number }}</p>
+            <h2 class="text-xl font-semibold leading-tight text-secondary-800 dark:text-secondary-100">{{ task.title }}</h2>
+            <p class="text-sm text-secondary-600 dark:text-secondary-400">{{ task.board.name }}</p>
           </div>
         </div>
-        <Link
-          v-if="canEdit"
-          :href="route('tasks.edit', task.id)"
-          class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700"
-        >
-          <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z" />
-          </svg>
-          Editar
-        </Link>
+        <div class="flex items-center gap-3">
+          <Link
+            v-if="canEdit"
+            :href="route('tasks.edit', task.id)"
+            class="inline-flex items-center rounded-md border border-secondary-300 bg-white px-4 py-2 text-sm font-semibold text-secondary-700 shadow-sm hover:bg-secondary-50 dark:border-secondary-600 dark:bg-secondary-800 dark:text-secondary-200 dark:hover:bg-secondary-700"
+          >
+            <svg class="-ml-0.5 mr-2 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path
+                stroke-linecap="round"
+                stroke-linejoin="round"
+                stroke-width="2"
+                d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"
+              ></path>
+            </svg>
+            Editar
+          </Link>
+        </div>
       </div>
+    </template>
 
-      <div class="grid gap-6 lg:grid-cols-3">
-        <!-- Main Content -->
-        <div class="lg:col-span-2 space-y-6">
-          <!-- Task Details Card -->
-          <div class="rounded-lg border border-secondary-200 bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-secondary-900 mb-4">Detalles</h2>
+    <div class="py-12">
+      <div class="mx-auto max-w-5xl sm:px-6 lg:px-8">
+        <div class="grid gap-6 lg:grid-cols-3">
+          <!-- Main Content -->
+          <div class="lg:col-span-2 space-y-6">
+            <!-- Task Info Card -->
+            <div class="rounded-lg bg-white p-6 shadow dark:bg-secondary-800 dark:shadow-lg">
+              <div class="mb-4 flex items-start justify-between">
+                <div class="flex items-center gap-3">
+                  <!-- Status Badge -->
+                  <span
+                    class="inline-flex items-center gap-1 rounded-full px-3 py-1 text-sm font-medium"
+                    :class="statusColorClass"
+                  >
+                    {{ task.status_label }}
+                  </span>
+                  <!-- Priority Badge -->
+                  <span
+                    class="inline-flex rounded-full px-3 py-1 text-sm font-semibold"
+                    :class="priorityColorClass"
+                  >
+                    {{ task.priority_label }}
+                  </span>
+                </div>
+              </div>
 
-            <div class="space-y-4">
-              <div>
-                <label class="text-sm font-medium text-secondary-500">Descripción</label>
-                <p class="mt-1 text-sm text-secondary-900 whitespace-pre-wrap">
+              <!-- Description -->
+              <div class="mb-6">
+                <h3 class="mb-2 text-sm font-medium text-secondary-700 dark:text-secondary-300">Descripción</h3>
+                <p class="whitespace-pre-wrap text-sm text-secondary-900 dark:text-secondary-100">
                   {{ task.description || 'Sin descripción' }}
                 </p>
               </div>
 
-              <!-- Blocked Alert -->
-              <div v-if="task.blocked_reason" class="rounded-lg bg-orange-50 border border-orange-200 p-4">
-                <div class="flex gap-3">
-                  <svg class="h-5 w-5 text-orange-600 flex-shrink-0" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  <div class="flex-1">
-                    <p class="text-sm font-semibold text-orange-900">Tarea Bloqueada</p>
-                    <p class="mt-1 text-sm text-orange-800">{{ task.blocked_reason }}</p>
-                  </div>
+              <!-- Time Status -->
+              <div class="rounded-md border p-4" :class="timeAlertClass">
+                <div class="mb-2 flex items-center justify-between">
+                  <span class="text-sm font-medium text-secondary-900 dark:text-secondary-100">Estado del Tiempo</span>
+                  <span class="text-lg font-bold dark:text-secondary-200">
+                    {{ task.hours_elapsed.toFixed(1) }}h / {{ task.target_hours }}h
+                  </span>
+                </div>
+                <div class="mb-2 h-2 w-full overflow-hidden rounded-full bg-secondary-200 dark:bg-secondary-700">
+                  <div
+                    class="h-full transition-all duration-300"
+                    :class="timeProgressClass"
+                    :style="{ width: `${Math.min(task.time_percentage, 100)}%` }"
+                  ></div>
+                </div>
+                <div class="flex items-center justify-between text-sm">
+                  <span v-if="task.time_status === 'overdue'" class="font-semibold text-red-700 dark:text-red-400">
+                    ⚠️ Tiempo excedido ({{ task.time_percentage.toFixed(0) }}%)
+                  </span>
+                  <span v-else-if="task.time_status === 'warning'" class="font-semibold text-yellow-700 dark:text-yellow-400">
+                    ⏰ Advertencia - {{ (100 - task.time_percentage).toFixed(0) }}% restante
+                  </span>
+                  <span v-else class="font-semibold text-green-700 dark:text-green-400">
+                    ✓ Dentro del tiempo - {{ (100 - task.time_percentage).toFixed(0) }}% restante
+                  </span>
                 </div>
               </div>
 
-              <div class="grid grid-cols-2 gap-4">
-                <div>
-                  <label class="text-sm font-medium text-secondary-500">Estado</label>
-                  <div class="mt-1">
-                    <span
-                      class="inline-flex rounded-full px-3 py-1 text-sm font-semibold"
-                      :class="{
-                        'bg-gray-100 text-gray-800': task.status_color === 'gray',
-                        'bg-purple-100 text-purple-800': task.status_color === 'purple',
-                        'bg-blue-100 text-blue-800': task.status_color === 'blue',
-                        'bg-orange-100 text-orange-800': task.status_color === 'orange',
-                        'bg-yellow-100 text-yellow-800': task.status_color === 'yellow',
-                        'bg-green-100 text-green-800': task.status_color === 'green',
-                        'bg-red-100 text-red-800': task.status_color === 'red',
-                        'bg-slate-100 text-slate-800': task.status_color === 'slate',
-                      }"
-                    >
-                      {{ task.status_label }}
-                    </span>
-                  </div>
-                </div>
-
-                <div>
-                  <label class="text-sm font-medium text-secondary-500">Prioridad</label>
-                  <div class="mt-1">
-                    <span
-                      class="inline-flex rounded-full px-3 py-1 text-sm font-semibold"
-                      :class="{
-                        'bg-gray-100 text-gray-800': task.priority_color === 'gray',
-                        'bg-blue-100 text-blue-800': task.priority_color === 'blue',
-                        'bg-orange-100 text-orange-800': task.priority_color === 'orange',
-                        'bg-red-100 text-red-800': task.priority_color === 'red',
-                      }"
-                    >
-                      {{ task.priority_label }}
-                    </span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <!-- Comments Section -->
-          <div class="rounded-lg border border-secondary-200 bg-white p-6 shadow-sm">
-            <h2 class="text-lg font-semibold text-secondary-900 mb-4">Comentarios</h2>
-
-            <!-- Comment Form -->
-            <form @submit.prevent="submitComment" class="mb-6">
-              <textarea
-                v-model="commentForm.comment"
-                rows="3"
-                placeholder="Agregar un comentario..."
-                class="block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-              ></textarea>
-              <div class="mt-2 flex justify-end">
-                <button
-                  type="submit"
-                  :disabled="commentForm.processing || !commentForm.comment"
-                  class="inline-flex items-center gap-2 rounded-lg bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm transition-all hover:bg-primary-700 disabled:opacity-50"
-                >
-                  Comentar
-                </button>
-              </div>
-            </form>
-
-            <!-- Comments List -->
-            <div class="space-y-4">
-              <div
-                v-for="comment in task.comments"
-                :key="comment.id"
-                class="flex gap-3 rounded-lg bg-secondary-50 p-4"
-              >
-                <div class="flex-shrink-0">
-                  <div class="flex h-10 w-10 items-center justify-center rounded-full bg-primary-600 text-white font-semibold">
-                    {{ comment.user_name.charAt(0).toUpperCase() }}
-                  </div>
-                </div>
-                <div class="flex-1">
-                  <div class="flex items-center justify-between">
-                    <p class="text-sm font-semibold text-secondary-900">{{ comment.user_name }}</p>
-                    <p class="text-xs text-secondary-500">{{ formatDate(comment.created_at) }}</p>
-                  </div>
-                  <p class="mt-1 text-sm text-secondary-700 whitespace-pre-wrap">{{ comment.comment }}</p>
-                </div>
-              </div>
-
-              <div v-if="!task.comments || task.comments.length === 0" class="text-center py-8">
-                <p class="text-sm text-secondary-500">No hay comentarios aún</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <!-- Sidebar -->
-        <div class="space-y-6">
-          <!-- Actions Card -->
-          <div class="rounded-lg border border-secondary-200 bg-white p-4 shadow-sm">
-            <h3 class="text-sm font-semibold text-secondary-900 mb-3">Acciones</h3>
-            <div class="space-y-2">
-              <form @submit.prevent="updateStatus" class="space-y-2">
-                <select
-                  v-model="statusForm.status"
-                  class="block w-full rounded-md border-secondary-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                >
-                  <option :value="task.status">{{ task.status_label }} (actual)</option>
-                  <option v-for="transition in allowedTransitions" :key="transition.value" :value="transition.value">
-                    {{ transition.label }}
-                    <span v-if="transition.requires_confirmation">⚠️</span>
-                  </option>
-                </select>
-                <button
-                  type="submit"
-                  :disabled="statusForm.processing || statusForm.status === task.status"
-                  class="w-full rounded-lg bg-primary-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-primary-700 disabled:opacity-50"
-                >
-                  Cambiar Estado
-                </button>
-              </form>
-
-              <form @submit.prevent="assignTask" class="space-y-2 pt-2 border-t border-secondary-200">
-                <select
-                  v-model="assignForm.assigned_to"
-                  class="block w-full rounded-md border-secondary-300 text-sm shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                >
-                  <option value="">Sin asignar</option>
-                  <option v-for="user in users" :key="user.id" :value="user.id">
-                    {{ user.name }}
-                  </option>
-                </select>
-                <button
-                  type="submit"
-                  :disabled="assignForm.processing"
-                  class="w-full rounded-lg bg-secondary-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-secondary-700 disabled:opacity-50"
-                >
-                  Asignar
-                </button>
-              </form>
-
-              <!-- Quick Actions -->
-              <div class="pt-2 border-t border-secondary-200 space-y-2">
-                <!-- Block/Unblock -->
-                <button
-                  v-if="task.status === 'blocked' || task.blocked_reason"
-                  @click="unblockTask"
-                  :disabled="unblockForm.processing"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-orange-700 disabled:opacity-50"
-                >
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 11V7a4 4 0 118 0m-4 8v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2z" />
-                  </svg>
-                  Desbloquear
-                </button>
-                <button
-                  v-else
-                  @click="showBlockModal = true"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-orange-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-orange-700"
-                >
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 15v2m-6 4h12a2 2 0 002-2v-6a2 2 0 00-2-2H6a2 2 0 00-2 2v6a2 2 0 002 2zm10-10V7a4 4 0 00-8 0v4h8z" />
-                  </svg>
-                  Bloquear Tarea
-                </button>
-
-                <!-- Archive -->
-                <button
-                  v-if="task.status === 'done' || task.status === 'cancelled'"
-                  @click="archiveTask"
-                  :disabled="archiveForm.processing"
-                  class="w-full inline-flex items-center justify-center gap-2 rounded-lg bg-slate-600 px-3 py-2 text-sm font-semibold text-white transition-all hover:bg-slate-700 disabled:opacity-50"
-                >
-                  <svg class="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 8h14M5 8a2 2 0 110-4h14a2 2 0 110 4M5 8v10a2 2 0 002 2h10a2 2 0 002-2V8m-9 4h4" />
-                  </svg>
-                  Archivar
-                </button>
-              </div>
-            </div>
-          </div>
-
-          <!-- Block Modal -->
-          <div v-if="showBlockModal" class="fixed inset-0 z-50 flex items-center justify-center bg-black bg-opacity-50">
-            <div class="bg-white rounded-lg shadow-xl max-w-md w-full mx-4">
-              <form @submit.prevent="blockTask">
-                <div class="p-6">
-                  <h3 class="text-lg font-semibold text-secondary-900 mb-4">Bloquear Tarea</h3>
-                  <div>
-                    <label class="block text-sm font-medium text-secondary-700 mb-2">
-                      Razón del bloqueo
-                    </label>
-                    <textarea
-                      v-model="blockForm.blocked_reason"
-                      rows="4"
-                      required
-                      placeholder="Describe por qué esta tarea está bloqueada..."
-                      class="block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500"
-                    ></textarea>
-                  </div>
-                </div>
-                <div class="bg-secondary-50 px-6 py-3 flex justify-end gap-2 rounded-b-lg">
+              <!-- Change Status -->
+              <div v-if="canUpdateStatus" class="mt-6 border-t border-secondary-200 pt-6 dark:border-secondary-700">
+                <h3 class="mb-3 text-sm font-medium text-secondary-700 dark:text-secondary-300">Cambiar Estado</h3>
+                <div class="flex flex-wrap gap-2">
                   <button
+                    v-for="transition in allowedTransitions"
+                    :key="transition.value"
+                    @click="changeStatus(transition.value)"
                     type="button"
-                    @click="showBlockModal = false"
-                    class="px-4 py-2 text-sm font-semibold text-secondary-700 hover:bg-secondary-200 rounded-lg transition-all"
+                    class="inline-flex items-center rounded-md border px-3 py-1.5 text-sm font-medium shadow-sm transition-colors"
+                    :class="getTransitionButtonClass(transition.color)"
                   >
-                    Cancelar
+                    {{ transition.label }}
                   </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- Sub-Tasks Card -->
+            <div class="rounded-lg bg-white p-6 shadow dark:bg-secondary-800 dark:shadow-lg">
+              <div class="mb-4 flex items-center justify-between">
+                <h3 class="text-lg font-semibold text-secondary-900 dark:text-secondary-100">Sub-tareas</h3>
+                <span v-if="task.sub_tasks.length > 0" class="text-sm text-secondary-600 dark:text-secondary-400">
+                  {{ completedSubTasksCount }} / {{ task.sub_tasks.length }} completadas
+                </span>
+              </div>
+
+              <!-- Progress Bar -->
+              <div v-if="task.sub_tasks.length > 0" class="mb-4">
+                <div class="mb-1 flex items-center justify-between text-xs">
+                  <span class="text-secondary-600 dark:text-secondary-400">Progreso</span>
+                  <span class="font-semibold text-secondary-900 dark:text-secondary-100">{{ task.progress }}%</span>
+                </div>
+                <div class="h-2 w-full overflow-hidden rounded-full bg-secondary-200 dark:bg-secondary-700">
+                  <div
+                    class="h-full rounded-full bg-green-500 transition-all duration-300 dark:bg-green-400"
+                    :style="{ width: `${task.progress}%` }"
+                  ></div>
+                </div>
+              </div>
+
+              <!-- Add Sub-Task Form (SIEMPRE ARRIBA) -->
+              <div v-if="canEdit" class="mb-4 rounded-md border-2 border-dashed border-primary-300 bg-primary-50/50 p-4 dark:border-primary-700 dark:bg-primary-900/10">
+                <label class="mb-2 block text-sm font-medium text-secondary-700 dark:text-secondary-300">
+                  Agregar nueva sub-tarea
+                </label>
+                <form @submit.prevent="addSubTask" class="flex gap-2">
+                  <input
+                    v-model="newSubTaskTitle"
+                    type="text"
+                    placeholder="Escribe el título de la sub-tarea..."
+                    class="flex-1 rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 dark:placeholder-secondary-400"
+                  />
                   <button
                     type="submit"
-                    :disabled="blockForm.processing"
-                    class="px-4 py-2 text-sm font-semibold bg-orange-600 text-white rounded-lg hover:bg-orange-700 transition-all disabled:opacity-50"
+                    :disabled="!newSubTaskTitle.trim() || addingSubTask"
+                    class="inline-flex items-center rounded-md bg-primary-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-primary-700 disabled:cursor-not-allowed disabled:opacity-50"
                   >
-                    Bloquear
+                    <svg class="-ml-0.5 mr-1.5 h-4 w-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                      <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"></path>
+                    </svg>
+                    {{ addingSubTask ? 'Agregando...' : 'Agregar' }}
                   </button>
-                </div>
-              </form>
+                </form>
+              </div>
+
+              <!-- Sub-Tasks List -->
+              <div v-if="task.sub_tasks.length > 0" class="space-y-2">
+                <SubTaskItem
+                  v-for="subTask in task.sub_tasks"
+                  :key="subTask.id"
+                  :sub-task="subTask"
+                  :can-edit="canEdit"
+                  :can-delete="canEdit"
+                  :can-reorder="canEdit"
+                />
+              </div>
+
+              <!-- Empty State -->
+              <div v-else class="py-8 text-center">
+                <svg
+                  class="mx-auto h-10 w-10 text-secondary-400 dark:text-secondary-500"
+                  fill="none"
+                  stroke="currentColor"
+                  viewBox="0 0 24 24"
+                >
+                  <path
+                    stroke-linecap="round"
+                    stroke-linejoin="round"
+                    stroke-width="2"
+                    d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"
+                  ></path>
+                </svg>
+                <p class="mt-2 text-sm text-secondary-600 dark:text-secondary-400">No hay sub-tareas todavía</p>
+                <p class="text-xs text-secondary-500 dark:text-secondary-500">
+                  {{ canEdit ? 'Usa el formulario de arriba para agregar la primera sub-tarea' : 'Este tablero no tiene sub-tareas' }}
+                </p>
+              </div>
             </div>
           </div>
 
-          <!-- Info Card -->
-          <div class="rounded-lg border border-secondary-200 bg-white p-4 shadow-sm">
-            <h3 class="text-sm font-semibold text-secondary-900 mb-3">Información</h3>
-            <dl class="space-y-3 text-sm">
-              <div>
-                <dt class="font-medium text-secondary-500">Creado por</dt>
-                <dd class="mt-1 text-secondary-900">{{ task.created_by_name }}</dd>
+          <!-- Sidebar -->
+          <div class="space-y-6">
+            <!-- Board Info -->
+            <div class="rounded-lg bg-white p-6 shadow dark:bg-secondary-800 dark:shadow-lg">
+              <h3 class="mb-4 text-sm font-medium text-secondary-700 dark:text-secondary-300">Tablero</h3>
+              <Link
+                :href="route('boards.show', task.board.id)"
+                class="block rounded-md border border-secondary-200 p-3 transition-colors hover:border-primary-300 hover:bg-primary-50 dark:border-secondary-700 dark:hover:border-primary-600 dark:hover:bg-primary-900/20"
+              >
+                <p class="font-medium text-secondary-900 dark:text-secondary-100">{{ task.board.name }}</p>
+                <p class="mt-1 text-xs text-secondary-600 dark:text-secondary-400">{{ task.board.user.name }}</p>
+              </Link>
+            </div>
+
+            <!-- Task Details -->
+            <div class="rounded-lg bg-white p-6 shadow dark:bg-secondary-800 dark:shadow-lg">
+              <h3 class="mb-4 text-sm font-medium text-secondary-700 dark:text-secondary-300">Detalles</h3>
+              <div class="space-y-3 text-sm">
+                <div>
+                  <span class="text-secondary-600 dark:text-secondary-400">Creada:</span>
+                  <p class="font-medium text-secondary-900 dark:text-secondary-100">{{ formatDate(task.created_at) }}</p>
+                </div>
+                <div v-if="task.completed_at">
+                  <span class="text-secondary-600 dark:text-secondary-400">Completada:</span>
+                  <p class="font-medium text-secondary-900 dark:text-secondary-100">{{ formatDate(task.completed_at) }}</p>
+                </div>
+                <div v-if="task.cancel_reason">
+                  <span class="text-secondary-600 dark:text-secondary-400">Razón de cancelación:</span>
+                  <p class="mt-1 font-medium text-red-700 dark:text-red-400">{{ task.cancel_reason }}</p>
+                </div>
               </div>
-              <div>
-                <dt class="font-medium text-secondary-500">Asignado a</dt>
-                <dd class="mt-1 text-secondary-900">{{ task.assigned_to_name || 'Sin asignar' }}</dd>
-              </div>
-              <div>
-                <dt class="font-medium text-secondary-500">Fecha de vencimiento</dt>
-                <dd class="mt-1" :class="{ 'text-red-600 font-semibold': task.is_overdue }">
-                  {{ task.due_date ? formatDate(task.due_date) : 'Sin fecha' }}
-                </dd>
-              </div>
-              <div>
-                <dt class="font-medium text-secondary-500">Creada</dt>
-                <dd class="mt-1 text-secondary-900">{{ formatDate(task.created_at) }}</dd>
-              </div>
-              <div v-if="task.completed_at">
-                <dt class="font-medium text-secondary-500">Completada</dt>
-                <dd class="mt-1 text-secondary-900">{{ formatDate(task.completed_at) }}</dd>
-              </div>
-            </dl>
+            </div>
           </div>
         </div>
       </div>
     </div>
-  </AppLayout>
+
+    <!-- Cancel Modal -->
+    <Modal :show="showCancelModal" @close="showCancelModal = false">
+      <div class="p-6">
+        <h2 class="text-lg font-semibold text-secondary-900 dark:text-secondary-100">Cancelar Tarea</h2>
+        <p class="mt-2 text-sm text-secondary-600 dark:text-secondary-400">
+          Por favor, proporciona una razón para la cancelación de esta tarea.
+        </p>
+        <form @submit.prevent="submitCancellation" class="mt-4">
+          <textarea
+            v-model="cancelReason"
+            rows="4"
+            required
+            class="block w-full rounded-md border-secondary-300 shadow-sm focus:border-primary-500 focus:ring-primary-500 sm:text-sm dark:border-secondary-600 dark:bg-secondary-700 dark:text-secondary-100 dark:placeholder-secondary-400"
+            placeholder="Describe la razón de la cancelación..."
+          ></textarea>
+          <div class="mt-4 flex justify-end gap-3">
+            <button
+              type="button"
+              @click="showCancelModal = false"
+              class="rounded-md border border-secondary-300 bg-white px-4 py-2 text-sm font-semibold text-secondary-700 shadow-sm hover:bg-secondary-50 dark:border-secondary-600 dark:bg-secondary-800 dark:text-secondary-200 dark:hover:bg-secondary-700"
+            >
+              Cancelar
+            </button>
+            <button
+              type="submit"
+              :disabled="!cancelReason.trim()"
+              class="rounded-md bg-red-600 px-4 py-2 text-sm font-semibold text-white shadow-sm hover:bg-red-700 disabled:cursor-not-allowed disabled:opacity-50"
+            >
+              Confirmar Cancelación
+            </button>
+          </div>
+        </form>
+      </div>
+    </Modal>
+  </AuthenticatedLayout>
 </template>
 
 <script setup>
-import { ref, onMounted } from 'vue'
-import { useForm, Link, router } from '@inertiajs/vue3'
-import AppLayout from '@/Layouts/AppLayout.vue'
-import axios from 'axios'
+import { ref, computed, onMounted } from 'vue'
+import { Head, Link, router, usePage } from '@inertiajs/vue3'
+import AuthenticatedLayout from '@/Layouts/AuthenticatedLayout.vue'
+import SubTaskItem from '@/Components/SubTaskItem.vue'
+import Modal from '@/Components/Modal.vue'
+
+const page = usePage()
 
 const props = defineProps({
   task: Object,
-  users: Array,
   statuses: Object,
   priorities: Object,
-  canEdit: Boolean,
 })
 
-const showBlockModal = ref(false)
+const newSubTaskTitle = ref('')
+const addingSubTask = ref(false)
 const allowedTransitions = ref([])
+const showCancelModal = ref(false)
+const cancelReason = ref('')
 
-const commentForm = useForm({
-  comment: '',
+const canEdit = computed(() => {
+  const user = page.props.auth.user
+  // Solo el propietario del tablero puede editar (los admins NO pueden editar tareas de otros)
+  return user?.id === props.task.board.user_id
 })
 
-const statusForm = useForm({
-  status: props.task.status,
+const isOwner = computed(() => {
+  const user = page.props.auth.user
+  return user?.id === props.task.board.user_id
 })
 
-const assignForm = useForm({
-  assigned_to: props.task.assigned_to || '',
+const canUpdateStatus = computed(() => {
+  return canEdit.value && allowedTransitions.value.length > 0
 })
 
-const blockForm = useForm({
-  blocked_reason: '',
+const completedSubTasksCount = computed(() => {
+  return props.task.sub_tasks.filter(st => st.status === 'completada').length
 })
 
-const unblockForm = useForm({})
+const statusColorClass = computed(() => {
+  switch (props.task.status_color) {
+    case 'gray': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+    case 'blue': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    case 'purple': return 'bg-purple-100 text-purple-800 dark:bg-purple-900/30 dark:text-purple-300'
+    case 'yellow': return 'bg-yellow-100 text-yellow-800 dark:bg-yellow-900/30 dark:text-yellow-300'
+    case 'green': return 'bg-green-100 text-green-800 dark:bg-green-900/30 dark:text-green-300'
+    case 'red': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    default: return 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300'
+  }
+})
 
-const archiveForm = useForm({})
+const priorityColorClass = computed(() => {
+  switch (props.task.priority_color) {
+    case 'gray': return 'bg-gray-100 text-gray-800 dark:bg-gray-900/30 dark:text-gray-300'
+    case 'blue': return 'bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300'
+    case 'orange': return 'bg-orange-100 text-orange-800 dark:bg-orange-900/30 dark:text-orange-300'
+    case 'red': return 'bg-red-100 text-red-800 dark:bg-red-900/30 dark:text-red-300'
+    default: return 'bg-secondary-100 text-secondary-800 dark:bg-secondary-900/30 dark:text-secondary-300'
+  }
+})
 
-const submitComment = () => {
-  commentForm.post(route('tasks.comments', props.task.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      commentForm.reset()
-    },
-  })
-}
+const timeAlertClass = computed(() => {
+  switch (props.task.time_color) {
+    case 'green': return 'border-green-300 bg-green-50 dark:border-green-700 dark:bg-green-900/30'
+    case 'yellow': return 'border-yellow-300 bg-yellow-50 dark:border-yellow-700 dark:bg-yellow-900/30'
+    case 'red': return 'border-red-300 bg-red-50 dark:border-red-700 dark:bg-red-900/30'
+    default: return 'border-secondary-300 bg-secondary-50 dark:border-secondary-600 dark:bg-secondary-700/50'
+  }
+})
 
-const assignTask = () => {
-  assignForm.patch(route('tasks.assign', props.task.id), {
-    preserveScroll: true,
-  })
-}
+const timeProgressClass = computed(() => {
+  switch (props.task.time_color) {
+    case 'green': return 'bg-green-500 dark:bg-green-400'
+    case 'yellow': return 'bg-yellow-500 dark:bg-yellow-400'
+    case 'red': return 'bg-red-500 dark:bg-red-400'
+    default: return 'bg-secondary-500 dark:bg-secondary-400'
+  }
+})
 
-const blockTask = () => {
-  blockForm.patch(route('tasks.block', props.task.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      showBlockModal.value = false
-      blockForm.reset()
-    },
-  })
-}
-
-const unblockTask = () => {
-  if (confirm('¿Estás seguro de que deseas desbloquear esta tarea?')) {
-    unblockForm.patch(route('tasks.unblock', props.task.id), {
-      preserveScroll: true,
-    })
+const getTransitionButtonClass = (color) => {
+  const baseClass = 'hover:opacity-80 focus:outline-none focus:ring-2 focus:ring-offset-2 dark:focus:ring-offset-secondary-800'
+  switch (color) {
+    case 'gray': return `${baseClass} border-gray-300 bg-gray-100 text-gray-800 focus:ring-gray-500 dark:border-gray-700 dark:bg-gray-900/30 dark:text-gray-300`
+    case 'blue': return `${baseClass} border-blue-300 bg-blue-100 text-blue-800 focus:ring-blue-500 dark:border-blue-700 dark:bg-blue-900/30 dark:text-blue-300`
+    case 'purple': return `${baseClass} border-purple-300 bg-purple-100 text-purple-800 focus:ring-purple-500 dark:border-purple-700 dark:bg-purple-900/30 dark:text-purple-300`
+    case 'yellow': return `${baseClass} border-yellow-300 bg-yellow-100 text-yellow-800 focus:ring-yellow-500 dark:border-yellow-700 dark:bg-yellow-900/30 dark:text-yellow-300`
+    case 'green': return `${baseClass} border-green-300 bg-green-100 text-green-800 focus:ring-green-500 dark:border-green-700 dark:bg-green-900/30 dark:text-green-300`
+    case 'red': return `${baseClass} border-red-300 bg-red-100 text-red-800 focus:ring-red-500 dark:border-red-700 dark:bg-red-900/30 dark:text-red-300`
+    default: return `${baseClass} border-secondary-300 bg-secondary-100 text-secondary-800 focus:ring-secondary-500 dark:border-secondary-700 dark:bg-secondary-900/30 dark:text-secondary-300`
   }
 }
 
-const archiveTask = () => {
-  if (confirm('¿Estás seguro de que deseas archivar esta tarea?')) {
-    archiveForm.patch(route('tasks.archive', props.task.id), {
+const addSubTask = () => {
+  if (!newSubTaskTitle.value.trim()) return
+
+  addingSubTask.value = true
+  router.post(
+    route('sub-tasks.store', props.task.id),
+    { title: newSubTaskTitle.value },
+    {
       preserveScroll: true,
-    })
+      onSuccess: () => {
+        newSubTaskTitle.value = ''
+        addingSubTask.value = false
+      },
+      onError: () => {
+        addingSubTask.value = false
+      },
+    }
+  )
+}
+
+const changeStatus = (newStatus) => {
+  if (newStatus === 'cancelada') {
+    showCancelModal.value = true
+    return
+  }
+
+  router.patch(
+    route('tasks.status', props.task.id),
+    { status: newStatus },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        fetchAllowedTransitions()
+      },
+    }
+  )
+}
+
+const submitCancellation = () => {
+  router.patch(
+    route('tasks.status', props.task.id),
+    {
+      status: 'cancelada',
+      cancel_reason: cancelReason.value,
+    },
+    {
+      preserveScroll: true,
+      onSuccess: () => {
+        showCancelModal.value = false
+        cancelReason.value = ''
+        fetchAllowedTransitions()
+      },
+    }
+  )
+}
+
+const fetchAllowedTransitions = async () => {
+  try {
+    const response = await fetch(route('tasks.transitions', props.task.id))
+    const data = await response.json()
+    allowedTransitions.value = data.allowed_transitions
+  } catch (error) {
+    console.error('Error fetching transitions:', error)
   }
 }
 
 const formatDate = (date) => {
-  return new Date(date).toLocaleString('es-ES', {
+  if (!date) return null
+  return new Date(date).toLocaleDateString('es-ES', {
     year: 'numeric',
-    month: 'short',
+    month: 'long',
     day: 'numeric',
     hour: '2-digit',
-    minute: '2-digit'
-  })
-}
-
-const loadAllowedTransitions = async () => {
-  try {
-    const response = await axios.get(route('tasks.transitions', props.task.id))
-    allowedTransitions.value = response.data.allowed_transitions
-  } catch (error) {
-    console.error('Error loading transitions:', error)
-    // Fallback: usar todos los estados si hay error
-    allowedTransitions.value = Object.entries(props.statuses)
-      .filter(([value]) => value !== props.task.status)
-      .map(([value, label]) => ({
-        value,
-        label,
-        requires_confirmation: false
-      }))
-  }
-}
-
-const updateStatus = () => {
-  const selectedTransition = allowedTransitions.value.find(
-    t => t.value === statusForm.status
-  )
-
-  if (selectedTransition && selectedTransition.requires_confirmation) {
-    if (!confirm(`⚠️ Esta transición requiere confirmación.\n\n¿Estás seguro de que deseas cambiar el estado a "${selectedTransition.label}"?`)) {
-      statusForm.status = props.task.status
-      return
-    }
-  }
-
-  statusForm.patch(route('tasks.status', props.task.id), {
-    preserveScroll: true,
-    onSuccess: () => {
-      loadAllowedTransitions()
-    }
+    minute: '2-digit',
   })
 }
 
 onMounted(() => {
-  loadAllowedTransitions()
+  fetchAllowedTransitions()
 })
 </script>
